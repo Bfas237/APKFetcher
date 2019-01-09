@@ -1,7 +1,6 @@
 requests
 bs4
-apkdl
-pyrogram[fast]==0.9.3
+pyrogram[fast]
 hachoir
 Tgcrypto
 tldextract
