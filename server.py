@@ -69,7 +69,16 @@ def exec_thread(target, *args, **kwargs):
 from hurry.filesize import size, alternative
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
-
+def prog(client, current, total, message_id, chat_id):
+ if round(current/total*100, 0) % 5 == 0:
+  try:
+   client.edit_message_text(
+    chat_id,
+    message_id,
+    text = "{}% of {}MB".format(round(current/total*100, 0), total//1024//1024)
+   )
+  except:
+   pass
 
 def shuffle(word):
     wordlen = len(word)
@@ -216,7 +225,7 @@ def start(bot, update):
     active_chats[update.from_user.id]['actions'].append('apks')
     audio_string = "{}".format("downl")
     
-    video_string = "{}".format("other")
+    services = "{}".format("other")
     
     info_string = "{}".format("help")
     
@@ -231,7 +240,7 @@ def start(bot, update):
                 # Generates a callback query when pressed
                 InlineKeyboardButton("🚸 Join Beta group ", callback_data=join_string.encode("UTF-8")),
                 # Opens a web URL
-                InlineKeyboardButton("♻️ Other Projects", callback_data=video_string.encode("UTF-8")),
+                InlineKeyboardButton("♻️ Services", callback_data=services.encode("UTF-8")),
             ],
             [  
                 InlineKeyboardButton("🆘 Help and Usage", callback_data=info_string.encode("UTF-8")),
@@ -240,7 +249,87 @@ def start(bot, update):
     ),
         reply_to_message_id=update.message_id,
         disable_web_page_preview=True).message_id
+
     
+def get_link(bot, update):
+    global active_chats
+    if update.from_user.id not in active_chats:
+        active_chats[update.from_user.id] = {'actions': []}
+    active_chats[update.from_user.id]['actions'].append('get_link')
+    audio_string = "{}".format("downl")
+    
+    services = "{}".format("services")
+    
+    info_string = "{}".format("help")
+    
+    join_string = "{}".format("join")
+    if update.reply_to_message is not None:
+        reply_message = update.reply_to_message
+        download_location = Config.DOWNLOAD_LOCATION + "/"
+        a = bot.send_message(
+            chat_id=update.from_user.id,
+            text=Translation.DOWNLOAD_START,
+            reply_to_message_id=update.message_id
+        )
+        
+        after_download_file_name = bot.download_media(
+            message=reply_message,
+            file_name=download_location
+        )
+        filename_w_ext = os.path.basename(after_download_file_name)
+        filename, download_extension = os.path.splitext(filename_w_ext)
+        filename = filename.strip('\n').replace(' ','_')
+        bot.edit_message_text(
+            text=Translation.SAVED_RECVD_DOC_FILE,
+            chat_id=update.from_user.id,
+            message_id=a.message_id
+        )
+        url = "https://transfer.sh/{}{}".format(str(filename), str(download_extension))
+        max_days = "5"
+        command_to_exec = [
+            "curl",
+            # "-H", 'Max-Downloads: 1',
+            "-H", 'Max-Days: 5', # + max_days + '',
+            "--upload-file", after_download_file_name,
+            url
+        ]
+        bot.edit_message_text(
+            text=Translation.UPLOAD_START,
+            chat_id=update.from_user.id,
+            message_id=a.message_id
+        )
+        try:
+            logger.info(command_to_exec)
+            t_response = subprocess.check_output(command_to_exec, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as exc:
+            logger.info("Status : FAIL", exc.returncode, exc.output)
+            bot.edit_message_text(
+                chat_id=update.from_user.id,
+                text=exc.output.decode("UTF-8"),
+                message_id=a.message_id
+            )
+        else:
+            t_response_arry = t_response.decode("UTF-8").split("\n")[-1].strip()
+            bot.edit_message_text(
+                chat_id=update.from_user.id,
+                text=Translation.AFTER_GET_DL_LINK.format(t_response_arry, max_days),
+                parse_mode=pyrogram.ParseMode.HTML,
+                message_id=a.message_id,
+                disable_web_page_preview=True
+            )
+            try:
+                os.remove(after_download_file_name)
+            except:
+                pass
+    else:
+        bot.send_message(
+            chat_id=update.from_user.id,
+            text=Translation.REPLY_TO_DOC_GET_LINK,
+            reply_to_message_id=update.message_id
+        )
+    
+
+   
 def help(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
@@ -259,6 +348,7 @@ def help(bot, update):
     ),
         reply_to_message_id=update.message_id,
         disable_web_page_preview=True).message_id
+    
 def search(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
@@ -288,7 +378,7 @@ def start_data(bot, update):
     active_chats[update.from_user.id]['actions'].append('apks')
     audio_string = "{}".format("downl")
     
-    video_string = "{}".format("other")
+    services = "{}".format("services")
     
     info_string = "{}".format("help")
     
@@ -305,7 +395,7 @@ def start_data(bot, update):
                 # Generates a callback query when pressed
                 InlineKeyboardButton("🚸 Join Beta group ", callback_data=join_string.encode("UTF-8")),
                 # Opens a web URL
-                InlineKeyboardButton("♻️ Other Projects", callback_data=video_string.encode("UTF-8")),
+                InlineKeyboardButton("♻️ Services", callback_data=services.encode("UTF-8")),
             ],
             [  
                 InlineKeyboardButton("🆘 Help and Usage", callback_data=info_string.encode("UTF-8")),
@@ -340,7 +430,33 @@ def pyrogram_data(bot, update):
         ]
     ),
         message_id=update.message.message_id
-    )          
+    )        
+
+@app.on_callback_query(dynamic_data("services"))
+def start_data(bot, update):
+    global active_chats
+    if update.from_user.id not in active_chats:
+        active_chats[update.from_user.id] = {'actions': []}
+    active_chats[update.from_user.id]['actions'].append('services')
+    
+    start_string = "{}".format("start")
+    bot.edit_message_text(
+        text=Translation.SERVICES,
+        chat_id=update.from_user.id,
+        parse_mode=pyrogram.ParseMode.HTML,
+        
+        reply_markup=InlineKeyboardMarkup(
+        [
+            
+            [  
+                InlineKeyboardButton("⬅️ " + "Go Back" , callback_data=start_string.encode("UTF-8"))
+            ]
+        ]
+    ),
+        message_id=update.message.message_id,
+        disable_web_page_preview=True
+    )        
+
 @app.on_callback_query(dynamic_data("downl"))
 def pyrogram_data(bot, update):
     global active_chats
@@ -554,7 +670,8 @@ def button(bot, update):
         soup = BeautifulSoup(res, "html.parser").find('a', {'id':'download_link'})
         if soup['href']:
             r = requests.get(soup['href'], stream=True, headers=headers)
-            required_file_name = get_filename_from_cd(r.headers.get('content-disposition'))
+            required_file_nam = get_filename_from_cd(r.headers.get('content-disposition'))
+            required_file_name = required_file_nam.strip('\n').replace('\"','')
             with open(required_file_name, 'wb') as file:
                 for chunk in r.iter_content(chunk_size=8192):
                     total_length = r.headers.get('content-length')
@@ -574,8 +691,10 @@ def button(bot, update):
         file_size = os.stat(required_file_name).st_size
         bot.send_chat_action(update.from_user.id,'UPLOAD_DOCUMENT')
         t2 = time.time()
+        message_id = update.message.message_id
+        chat_id = update.from_user.id
         description = " " + " \r\n ❤️ @Bfas237Bots "
-        sent = bot.send_document(update.from_user.id, required_file_name, caption='**File Size**: {}\n\n**Completed in**:  `{}` **Seconds**\n'.format(str(pretty_size(total_length)), str(int(t2-t1))), reply_to_message_id=update.message.reply_to_message.message_id)
+        sent = bot.send_document(update.from_user.id, required_file_name, progress = prog, progress_args = (message_id, chat_id), caption='**File Size**: {}\n\n**Completed in**:  `{}` **Seconds**\n'.format(str(pretty_size(total_length)), str(int(t2-t1))), reply_to_message_id=update.message.reply_to_message.message_id)
         
         time.sleep(2)
          
@@ -591,6 +710,7 @@ if __name__ == "__main__" :
     if not os.path.isdir(Config.DOWNLOAD_LOCATION):
         os.makedirs(Config.DOWNLOAD_LOCATION)
     app.add_handler(pyrogram.MessageHandler(start, pyrogram.Filters.command(["start"])))
+    app.add_handler(pyrogram.MessageHandler(get_link, pyrogram.Filters.command(["link" , "l"])))
     app.add_handler(pyrogram.MessageHandler(search, pyrogram.Filters.command(["search" , "s"])))
     app.add_handler(pyrogram.MessageHandler(help, pyrogram.Filters.command(["help"])))
     app.add_handler(pyrogram.MessageHandler(messages, pyrogram.Filters.text))
