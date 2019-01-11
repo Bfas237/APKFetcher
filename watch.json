@@ -17,5 +17,5 @@
       "^templates/"
     ]
   },
-  "throttle": 15000
+  "throttle": 100
 }

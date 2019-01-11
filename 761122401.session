@@ -1,0 +1,31 @@
+{
+    "dc_id": 4,
+    "peers_by_username": {
+        "bfas237botsdevs": -1001139726492,
+        "mobsrcbot": 761122401,
+        "gmotherbot": 671045549,
+        "bfaschat": 197005208,
+        "the_jokero": 645245685
+    },
+    "peers_by_phone": {},
+    "user_id": 761122401,
+    "date": 1547208052,
+    "peers_by_id": {
+        "197005208": 5056292574548846379,
+        "761122401": -1271482086975092452,
+        "-1001139726492": -2603457046603389378,
+        "671045549": -228785833796396195,
+        "645245685": 5969451180312575969
+    },
+    "auth_key": [
+        "rYAsLQg7XYaSe6w6AewJzTHRpTZke3VMdQPRbqLQ18t",
+        "mrji6YTzW83brj72zjaiEgDOwJcfLh1K9//Bntuoib6",
+        "aY8nhhPZ+cvxXltZ0j2RgPrXQp1IKsdlukJyYbcCU+S",
+        "9wiTXt8jF22OQtCnUnoGyivsrjjICvYukJGAy+WVLYF",
+        "m9R9syBNkXNdfMaafwLpTX5BZnVF9Wya+aGDZxUVTqd",
+        "7S0TCf8KkGdsoFEMCWDE0D5lmOwZr2f93xxp34zr+3P",
+        "FU0+nEOpl8CUfq0CU1e+JqS8eXwibN9VjRBycC6H+cN",
+        "n+tMMRwW+ASYRMmVdzYZOVX2RSn3MLSSA1+vTsD8A=="
+    ],
+    "test_mode": false
+}
