@@ -237,7 +237,7 @@ def start(bot, update):
     active_chats[update.from_user.id]['actions'].append('apks')
     audio_string = "{}".format("downl")
     
-    services = "{}".format("other")
+    services = "{}".format("services")
     
     info_string = "{}".format("help")
     
@@ -263,11 +263,12 @@ def start(bot, update):
         disable_web_page_preview=True).message_id
 
     
-def get_link(bot, update):
+    
+def ft(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
         active_chats[update.from_user.id] = {'actions': []}
-    active_chats[update.from_user.id]['actions'].append('get_link')
+    active_chats[update.from_user.id]['actions'].append('filetransfer')
     audio_string = "{}".format("downl")
     
     services = "{}".format("services")
@@ -286,7 +287,7 @@ def get_link(bot, update):
         
         after_download_file_name = bot.download_media(
             message=reply_message,
-            file_name=download_location
+            file_name=download_location, progress = progress, progress_args = (a.message_id, update.from_user.id)
         )
         filename_w_ext = os.path.basename(after_download_file_name)
         filename, download_extension = os.path.splitext(filename_w_ext)
@@ -324,7 +325,7 @@ def get_link(bot, update):
             t_response_arry = t_response.decode("UTF-8").split("\n")[-1].strip()
             bot.edit_message_text(
                 chat_id=update.from_user.id,
-                text=Translation.AFTER_GET_DL_LINK.format(t_response_arry, max_days),
+                text=Translation.FILETRANSFER_GET_DL_LINK.format(t_response_arry, max_days),
                 parse_mode=pyrogram.ParseMode.HTML,
                 message_id=a.message_id,
                 disable_web_page_preview=True
@@ -339,6 +340,81 @@ def get_link(bot, update):
             text=Translation.REPLY_TO_DOC_GET_LINK,
             reply_to_message_id=update.message_id
         )
+    
+def fo(bot, update):
+    global active_chats
+    if update.from_user.id not in active_chats:
+        active_chats[update.from_user.id] = {'actions': []}
+    active_chats[update.from_user.id]['actions'].append('fileio')
+    audio_string = "{}".format("downl")
+    
+    services = "{}".format("services")
+    
+    info_string = "{}".format("help")
+    
+    join_string = "{}".format("join")
+    if update.reply_to_message is not None:
+        reply_message = update.reply_to_message
+        download_location = Config.DOWNLOAD_LOCATION + "/"
+        a = bot.send_message(
+            chat_id=update.from_user.id,
+            text=Translation.DOWNLOAD_START,
+            reply_to_message_id=update.message_id
+        )
+        
+        after_download_file_name = bot.download_media(
+            message=reply_message,
+            file_name=download_location, progress = progress, progress_args = (a.message_id, update.from_user.id)
+        )
+        filename_w_ext = os.path.basename(after_download_file_name)
+        filename, download_extension = os.path.splitext(filename_w_ext)
+        filename = filename.strip('\n').replace(' ','_')
+        bot.edit_message_text(
+            text=Translation.SAVED_RECVD_DOC_FILE,
+            chat_id=update.from_user.id,
+            message_id=a.message_id
+        )
+        expires = "1w"
+        
+        bot.edit_message_text(
+            text=Translation.UPLOAD_START,
+            chat_id=update.from_user.id,
+            message_id=a.message_id
+        )
+      
+        url = "https://file.io/?expires={expires}"
+        fin = open(after_download_file_name, 'rb')
+        files = {'file': fin}
+        try:
+          max_days = "7"
+          r = requests.post(url, files=files).json()
+          print(r['link'])
+          bot.edit_message_text(
+                chat_id=update.from_user.id,
+                text=Translation.FILEIO_GET_DL_LINK.format(r['link'], max_days),
+                parse_mode=pyrogram.ParseMode.HTML,
+                message_id=a.message_id,
+                disable_web_page_preview=True
+            )
+        except:
+                bot.edit_message_text(
+                chat_id=update.from_user.id,
+                text="Error uploading file",
+                message_id=a.message_id
+            )
+                os.remove(after_download_file_name)
+                pass
+        finally:
+          os.remove(after_download_file_name)
+          fin.close()
+    else:
+        bot.send_message(
+            chat_id=update.from_user.id,
+            text=Translation.REPLY_TO_DOC_GET_LINK,
+            reply_to_message_id=update.message_id
+        )
+    
+
     
 
    
@@ -723,8 +799,8 @@ if __name__ == "__main__" :
     if not os.path.isdir(Config.DOWNLOAD_LOCATION):
         os.makedirs(Config.DOWNLOAD_LOCATION)
     app.add_handler(pyrogram.MessageHandler(start, pyrogram.Filters.command(["start"])))
-    app.add_handler(pyrogram.MessageHandler(get_link, pyrogram.Filters.command(["ft"])))
-    app.add_handler(pyrogram.MessageHandler(get_link, pyrogram.Filters.command(["fo"])))
+    app.add_handler(pyrogram.MessageHandler(ft, pyrogram.Filters.command(["ft"])))
+    app.add_handler(pyrogram.MessageHandler(fo, pyrogram.Filters.command(["fo"])))
     app.add_handler(pyrogram.MessageHandler(search, pyrogram.Filters.command(["search" , "s"])))
     app.add_handler(pyrogram.MessageHandler(help, pyrogram.Filters.command(["help"])))
     app.add_handler(pyrogram.MessageHandler(messages, pyrogram.Filters.text))
