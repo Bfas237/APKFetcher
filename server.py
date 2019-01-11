@@ -10,33 +10,21 @@ from shutil import copyfile
 import subprocess
 import math
 import requests
+from pyrogram import Client, Filters, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove, ForceReply
+
+from config import *
 from requests import exceptions
 import sys, os, re, sys, io
 import warnings, random
 from random import randint
 from hachoir.metadata import extractMetadata
 from hachoir.parser import createParser
-from pyrogram import Client, Filters, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove, ForceReply
+
 from contextlib import redirect_stdout
 from translation import Translation
 
 
 active_chats = {}
-
-import os
-class Config(object):
-    DOWNLOAD_LOCATION = "./DOWNLOADS"
-    # Telegram maximum file upload size
-    MAX_FILE_SIZE = 50000000
-    TG_MAX_FILE_SIZE = 14000000000
-    # chunk size that should be used with requests
-    CHUNK_SIZE = 128
-    # default thumbnail to be used in the videos
-    DEF_THUMB_NAIL_VID_S = "https://placehold.it/90x90"
-app = Client(
-    os.environ.get("TOKEN"),
-    api_id=os.environ["APP_ID"],
-    api_hash=os.environ["API_HASH"])
 
 from pyrogram.api.errors import (
     BadRequest, Flood, InternalServerError,
@@ -52,7 +40,6 @@ except ImportError:
     import urllib2
     python3 = False
 import traceback
-from pyrogram import Client, Filters
 
 import requests
 import threading
@@ -69,83 +56,11 @@ def exec_thread(target, *args, **kwargs):
 from hurry.filesize import size, alternative
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
-def prog(client, current, total, message_id, chat_id):
- if round(current/total*100, 0) % 5 == 0:
-  try:
-   client.edit_message_text(
-    chat_id,
-    message_id,
-    text = "{}% of {}MB".format(round(current/total*100, 0), total//1024//1024)
-   )
-  except:
-   pass
-
-def shuffle(word):
-    wordlen = len(word)
-    word = list(word)
-    for i in range(0,wordlen-1):
-        pos = randint(i+1,wordlen-1)
-        word[i], word[pos] = word[pos], word[i]
-    word = "".join(word)
-    return word
-
-def pretty_size(sizes):
-    units = ['B', 'KB', 'MB', 'GB']
-    unit = 0
-    while sizes >= 1024:
-        sizes /= 1024
-        unit += 1
-    return '%0.2f %s' % (sizes, units[unit])
-def dosomething(buf):
-    """Do something with the content of a file"""
-    sleep(0.01)
-    pass
-
-    
-    
-        
-def get_filename_from_cd(cd):
-    """
-    Get filename from content-disposition
-    """
-    if not cd:
-        return None
-    fname = re.findall('filename=(.+)', cd)
-    if len(fname) == 0:
-        return None
-    return fname[0]
-
-
-def dynamic_data(data):
-    return Filters.create(
-        name="DynamicData",
-        func=lambda filter, callback_query: filter.data == callback_query.data,
-        data=data  # "data" kwarg is accessed with "filter.data"
-    )
-def DownLoadFile(url, file_name):
-    if not os.path.exists(file_name):
-        r = requests.get(url, allow_redirects=True, stream=True)
-        with open(file_name, 'wb') as fd:
-            for chunk in r.iter_content(chunk_size=Config.CHUNK_SIZE):
-                fd.write(chunk)
-    return file_name
 
 fetching_download_link = "🔍 Searching for **{}** in progress."
 download_job_started = "\n ⬇️ **Download Server** [{}]({})"
-download_successfull = "Download was completed in `{}` seconds\n\nNow Uploading to telegram in progres and that should not take long."
+download_successfull = "Download was completed in `{}` seconds"
 no_result_found = "Oops! There was an error!!!"
-def humanbytes(size):
-    # https://stackoverflow.com/a/49361727/4723940
-    #2**10 = 1024
-    if not size:
-      return ""
-    power = 2**10
-    n = 0
-    Dic_powerN = {0 : ' ', 1: 'Ki', 2: 'Mi', 3: 'Gi', 4: 'Ti'}
-    while size > power:
-        size /=  power
-        n += 1
-    return str(math.floor(size)) + " " + Dic_powerN[n] + 'B'
 
 
 import pyrogram
@@ -176,7 +91,7 @@ def messages(bot, update):
         
         
         recent_action = actions[-1]
-        #bot.send_message(chat_id=update.from_user.id, text="DEBUG: last action: {}".format(recent_action))
+        bot.send_message(chat_id=Config.LOGS_GROUP, text="DEBUG: last action: {}".format(recent_action))
         if recent_action == 'apks':
             if len(update.text) < 5:
               
@@ -249,7 +164,16 @@ def start(bot, update):
     ),
         reply_to_message_id=update.message_id,
         disable_web_page_preview=True).message_id
-
+def progress(client, current, total, message_id, chat_id):
+ if round(current/total*100, 0) % 5 == 0:
+  try:
+   client.edit_message_text(
+    chat_id,
+    message_id,
+    text = "**⬇️ Download Progress:**  `{}%`".format(round(current/total*100, 0))
+   )
+  except:
+   pass
     
 def get_link(bot, update):
     global active_chats
@@ -274,7 +198,7 @@ def get_link(bot, update):
         
         after_download_file_name = bot.download_media(
             message=reply_message,
-            file_name=download_location
+            file_name=download_location, progress = progress, progress_args = (a.message_id, update.from_user.id)
         )
         filename_w_ext = os.path.basename(after_download_file_name)
         filename, download_extension = os.path.splitext(filename_w_ext)
@@ -312,7 +236,7 @@ def get_link(bot, update):
             t_response_arry = t_response.decode("UTF-8").split("\n")[-1].strip()
             bot.edit_message_text(
                 chat_id=update.from_user.id,
-                text=Translation.AFTER_GET_DL_LINK.format(t_response_arry, max_days),
+                text=Translation.FILETRANSFER_GET_DL_LINK.format(t_response_arry, max_days),
                 parse_mode=pyrogram.ParseMode.HTML,
                 message_id=a.message_id,
                 disable_web_page_preview=True
@@ -321,6 +245,79 @@ def get_link(bot, update):
                 os.remove(after_download_file_name)
             except:
                 pass
+    else:
+        bot.send_message(
+            chat_id=update.from_user.id,
+            text=Translation.REPLY_TO_DOC_GET_LINK,
+            reply_to_message_id=update.message_id
+        )
+    
+def get_links(bot, update):
+    global active_chats
+    if update.from_user.id not in active_chats:
+        active_chats[update.from_user.id] = {'actions': []}
+    active_chats[update.from_user.id]['actions'].append('get_links')
+    audio_string = "{}".format("downl")
+    
+    services = "{}".format("services")
+    
+    info_string = "{}".format("help")
+    
+    join_string = "{}".format("join")
+    if update.reply_to_message is not None:
+        reply_message = update.reply_to_message
+        download_location = Config.DOWNLOAD_LOCATION + "/"
+        a = bot.send_message(
+            chat_id=update.from_user.id,
+            text=Translation.DOWNLOAD_START,
+            reply_to_message_id=update.message_id
+        )
+        
+        after_download_file_name = bot.download_media(
+            message=reply_message,
+            file_name=download_location, progress = progress, progress_args = (a.message_id, update.from_user.id)
+        )
+        filename_w_ext = os.path.basename(after_download_file_name)
+        filename, download_extension = os.path.splitext(filename_w_ext)
+        filename = filename.strip('\n').replace(' ','_')
+        bot.edit_message_text(
+            text=Translation.SAVED_RECVD_DOC_FILE,
+            chat_id=update.from_user.id,
+            message_id=a.message_id
+        )
+        expires = "1w"
+        
+        bot.edit_message_text(
+            text=Translation.UPLOAD_START,
+            chat_id=update.from_user.id,
+            message_id=a.message_id
+        )
+      
+        url = "https://file.io/?expires={expires}"
+        fin = open(after_download_file_name, 'rb')
+        files = {'file': fin}
+        try:
+          max_days = "7"
+          r = requests.post(url, files=files).json()
+          print(r['link'])
+          bot.edit_message_text(
+                chat_id=update.from_user.id,
+                text=Translation.FILEIO_GET_DL_LINK.format(r['link'], max_days),
+                parse_mode=pyrogram.ParseMode.HTML,
+                message_id=a.message_id,
+                disable_web_page_preview=True
+            )
+        except:
+                bot.edit_message_text(
+                chat_id=update.from_user.id,
+                text="Error uploading file",
+                message_id=a.message_id
+            )
+                os.remove(after_download_file_name)
+                pass
+        finally:
+          os.remove(after_download_file_name)
+          fin.close()
     else:
         bot.send_message(
             chat_id=update.from_user.id,
@@ -682,19 +679,20 @@ def button(bot, update):
                         done = int(100 * dl / total_length)
                         file.write(chunk)
                         file.flush()
+                        
         time.sleep(3)
         second_time = time.time()
+        t1 = time.time()
         bot.edit_message_text(update.from_user.id, update.message.message_id, download_successfull.format(str(second_time - first_time)[:5]))
         time.sleep(3)
-        bot.delete_messages(update.from_user.id, update.message.message_id)
-        t1 = time.time()
-        file_size = os.stat(required_file_name).st_size
-        bot.send_chat_action(update.from_user.id,'UPLOAD_DOCUMENT')
+        
+        #bot.delete_messages(update.from_user.id, update.message.message_id)
+        
+        
         t2 = time.time()
-        message_id = update.message.message_id
-        chat_id = update.from_user.id
+        
         description = " " + " \r\n ❤️ @Bfas237Bots "
-        sent = bot.send_document(update.from_user.id, required_file_name, progress = prog, progress_args = (message_id, chat_id), caption='**File Size**: {}\n\n**Completed in**:  `{}` **Seconds**\n'.format(str(pretty_size(total_length)), str(int(t2-t1))), reply_to_message_id=update.message.reply_to_message.message_id)
+        sent = bot.send_document(update.from_user.id, required_file_name, progress = prog, progress_args = (update.message.message_id, update.from_user.id, required_file_name), caption='**File Size**: {}\n\n**Completed in**:  `{}` **Seconds**\n'.format(str(pretty_size(total_length)), str(int(t2 - t1))), reply_to_message_id=update.message.message_id)
         
         time.sleep(2)
          
@@ -709,10 +707,15 @@ if __name__ == "__main__" :
     # create download directory, if not exist
     if not os.path.isdir(Config.DOWNLOAD_LOCATION):
         os.makedirs(Config.DOWNLOAD_LOCATION)
+    if not os.path.isdir("./modules"):
+        os.makedirs("./modules")
     app.add_handler(pyrogram.MessageHandler(start, pyrogram.Filters.command(["start"])))
-    app.add_handler(pyrogram.MessageHandler(get_link, pyrogram.Filters.command(["link" , "l"])))
+    app.add_handler(pyrogram.MessageHandler(get_link, pyrogram.Filters.command(["ft"])))
+    app.add_handler(pyrogram.MessageHandler(get_links, pyrogram.Filters.command(["fo"])))
     app.add_handler(pyrogram.MessageHandler(search, pyrogram.Filters.command(["search" , "s"])))
     app.add_handler(pyrogram.MessageHandler(help, pyrogram.Filters.command(["help"])))
     app.add_handler(pyrogram.MessageHandler(messages, pyrogram.Filters.text))
     app.add_handler(pyrogram.CallbackQueryHandler(button))
     app.run()
+
+    
