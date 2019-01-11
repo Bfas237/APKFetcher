@@ -69,17 +69,29 @@ def exec_thread(target, *args, **kwargs):
 from hurry.filesize import size, alternative
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
-def prog(client, current, total, message_id, chat_id):
+def prog(client, current, total, message_id, chat_id, required_file_name):
+ if round(current/total*100, 0) % 5 == 0:
+  try:
+   file_size = os.stat(required_file_name).st_size
+   client.send_chat_action(chat_id,'UPLOAD_DOCUMENT')
+   client.edit_message_text(
+    chat_id,
+    message_id,
+    text = "{}% of {}".format(round(current/total*100, 0), str(pretty_size(file_size)))
+   )
+  except:
+   pass
+def progress(client, current, total, message_id, chat_id):
  if round(current/total*100, 0) % 5 == 0:
   try:
    client.edit_message_text(
     chat_id,
     message_id,
-    text = "{}% of {}MB".format(round(current/total*100, 0), total//1024//1024)
+    text = "**⬇️ Download Progress:**  `{}%`".format(round(current/total*100, 0))
    )
   except:
    pass
-
+    
 def shuffle(word):
     wordlen = len(word)
     word = list(word)
@@ -682,19 +694,20 @@ def button(bot, update):
                         done = int(100 * dl / total_length)
                         file.write(chunk)
                         file.flush()
+                        
         time.sleep(3)
         second_time = time.time()
+        t1 = time.time()
         bot.edit_message_text(update.from_user.id, update.message.message_id, download_successfull.format(str(second_time - first_time)[:5]))
         time.sleep(3)
-        bot.delete_messages(update.from_user.id, update.message.message_id)
-        t1 = time.time()
-        file_size = os.stat(required_file_name).st_size
-        bot.send_chat_action(update.from_user.id,'UPLOAD_DOCUMENT')
+        
+        #bot.delete_messages(update.from_user.id, update.message.message_id)
+        
+        
         t2 = time.time()
-        message_id = update.message.message_id
-        chat_id = update.from_user.id
+        
         description = " " + " \r\n ❤️ @Bfas237Bots "
-        sent = bot.send_document(update.from_user.id, required_file_name, progress = prog, progress_args = (message_id, chat_id), caption='**File Size**: {}\n\n**Completed in**:  `{}` **Seconds**\n'.format(str(pretty_size(total_length)), str(int(t2-t1))), reply_to_message_id=update.message.reply_to_message.message_id)
+        sent = bot.send_document(update.from_user.id, required_file_name, progress = prog, progress_args = (update.message.message_id, update.from_user.id, required_file_name), caption='**File Size**: {}\n\n**Completed in**:  `{}` **Seconds**\n'.format(str(pretty_size(total_length)), str(int(t2 - t1))), reply_to_message_id=update.message.message_id)
         
         time.sleep(2)
          
@@ -710,9 +723,12 @@ if __name__ == "__main__" :
     if not os.path.isdir(Config.DOWNLOAD_LOCATION):
         os.makedirs(Config.DOWNLOAD_LOCATION)
     app.add_handler(pyrogram.MessageHandler(start, pyrogram.Filters.command(["start"])))
-    app.add_handler(pyrogram.MessageHandler(get_link, pyrogram.Filters.command(["link" , "l"])))
+    app.add_handler(pyrogram.MessageHandler(get_link, pyrogram.Filters.command(["ft"])))
+    app.add_handler(pyrogram.MessageHandler(get_link, pyrogram.Filters.command(["fo"])))
     app.add_handler(pyrogram.MessageHandler(search, pyrogram.Filters.command(["search" , "s"])))
     app.add_handler(pyrogram.MessageHandler(help, pyrogram.Filters.command(["help"])))
     app.add_handler(pyrogram.MessageHandler(messages, pyrogram.Filters.text))
     app.add_handler(pyrogram.CallbackQueryHandler(button))
     app.run()
+
+    
