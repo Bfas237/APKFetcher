@@ -1,7 +1,8 @@
 requests
 bs4
-pyrogram[fast]
+https://github.com/pyrogram/pyrogram/archive/develop.zip
 hachoir
+clint
 Tgcrypto
 tldextract
 hurry.filesize
