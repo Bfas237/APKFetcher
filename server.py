@@ -20,7 +20,7 @@ from pyrogram import Client, Filters, ReplyKeyboardMarkup, InlineKeyboardMarkup,
 from contextlib import redirect_stdout
 from translation import Translation
 from clint.textui import progress
-traceback
+import traceback
 active_chats = {}
 
 import os
