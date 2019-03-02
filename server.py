@@ -624,21 +624,21 @@ def command_get_specify_apk(bot, update):
         inline_keyboard = []
     
         if len(APPS) > 0:
-            sent.delete()
             items = ""
             for idx, app in enumerate(APPS):
                 items +=  ("[{:02d}]  -  {}".format(idx, app[0]))
         
                 start_string = "{}|{}".format(idx, app[0])
             ikeyboard = [InlineKeyboardButton(items, callback_data=start_string.encode("UTF-8"))]
-            inline_keyboard.append(ikeyboard)
+            
             user_chat = active_chats.get(update.from_user.id, None)
             user_chat['Aps'] = APPS
             user_chat['Apps'] = None      
+            inline_keyboard.append(ikeyboard)
         
             num=len(APPS)
             reply_markup = InlineKeyboardMarkup(inline_keyboard)
-            update.reply("📱 <b>Apk Downloader Premium</b> __Step 2 of  2__: <b>{}</b> Results \n\n".format(num), reply_markup=reply_markup, parse_mode="html", disable_web_page_preview=True, quote=True)
+            sent.edit("📱 <b>Apk Downloader Premium</b> __Step 2 of  2__: <b>{}</b> Results \n\n".format(num), reply_markup=reply_markup, parse_mode="html", disable_web_page_preview=True)
             
         else:
             sent.edit("**📱 Apk Downloader Premium**\n\n__Step 1 of  2__\n"
@@ -744,7 +744,7 @@ def button(bot, update):
     
     try:
         bot.edit_message_text(update.from_user.id, update.message.message_id, download_job_started.format(servers, APPS[app_num][2]))
-        time.sleep(5)
+        time.sleep(3)
         base_headers = {
         'User-Agent':  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.5',
         'Accept-Encoding': 'gzip, deflate, sdch',
