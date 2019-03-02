@@ -626,10 +626,13 @@ def command_get_specify_apk(bot, update):
         if len(APPS) > 0:
             items = ""
             for idx, app in enumerate(APPS):
-                items +=  ("[{:02d}]  -  {}".format(idx, app[0]))
-        
                 start_string = "{}|{}".format(idx, app[0])
-            ikeyboard = [InlineKeyboardButton(items, callback_data=start_string.encode("UTF-8"))]
+                ikeyboard = [
+                            InlineKeyboardButton(
+                                "[{:02d}]  -  {}".format(idx, app[0]),
+                                callback_data=start_string.encode("UTF-8")
+                            )
+                        ]
             
             user_chat = active_chats.get(update.from_user.id, None)
             user_chat['Aps'] = APPS
