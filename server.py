@@ -19,7 +19,7 @@ from hachoir.parser import createParser
 from pyrogram import Client, Filters, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove, ForceReply
 from contextlib import redirect_stdout
 from translation import Translation
-
+from clint.textui import progress
 
 active_chats = {}
 
@@ -757,19 +757,25 @@ def button(bot, update):
         res = requests.get(link + '/download?from=details', headers=headers).text
         soup = BeautifulSoup(res, "html.parser").find('a', {'id':'download_link'})
         if soup['href']:
-            r = requests.get(soup['href'], stream=True, headers=headers)
+            r = requests.get(soup['href'], stream=True, allow_redirects=True, headers=headers)
             required_file_nam = get_filename_from_cd(r.headers.get('content-disposition'))
-            required_file_name = required_file_nam.strip('\n').replace('\"','')
+            required_file_name = required_file_nam.strip('\n').replace('\"','').replace('\'','').replace('?','').replace(" ", "_")
             with open(required_file_name, 'wb') as file:
-                for chunk in r.iter_content(chunk_size=8192):
-                    total_length = r.headers.get('content-length')
-                    dl = 0
-                    total_length = int(total_length)
-                    if chunk:
-                        dl += len(chunk)
-                        done = int(100 * dl / total_length)
-                        file.write(chunk)
-                        file.flush()
+              total_length = int(r.headers.get('content-length', 0)) or None
+              downloaded_size = 0
+              chunk_size=8192*1024
+              if total_length is None:  # no content length header
+                file.write(r.content)
+              else:
+                dl = 0
+                total_length = int(total_length)
+                for chunk in progress.bar(r.iter_content(chunk_size=chunk_size), expected_size=(total_length / 1024) + 1):
+                if chunk:
+                  dl += len(chunk)
+                  done = int(100 * dl / total_length)
+                  file.write(chunk)
+                  file.flush()
+                  os.fsync(file.fileno())
                         
         time.sleep(3)
         second_time = time.time()
