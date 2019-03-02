@@ -737,9 +737,9 @@ def button(bot, update):
     chat_id = update.from_user.id
     rnd = "123456789abcdefgh-_"
     servers = shuffle(rnd)  
-    if update.data.find("|") == -1:
+    if update.data.find(b"|") == -1:
         return ""
-    app_num, app_name = update.data.split("|")
+    app_num, app_name = update.data.split(b"|")
     app_num = int(app_num)
     options={}
     link = APPS[app_num][2]
