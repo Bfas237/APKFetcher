@@ -19,7 +19,7 @@ from hachoir.parser import createParser
 from pyrogram import Client, Filters, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove, ForceReply
 from contextlib import redirect_stdout
 from translation import Translation
-
+from clint.textui import progress
 
 active_chats = {}
 
@@ -737,9 +737,9 @@ def button(bot, update):
     chat_id = update.from_user.id
     rnd = "123456789abcdefgh-_"
     servers = shuffle(rnd)  
-    if update.data.find("|") == -1:
+    if update.data.find(b"|") == -1:
         return ""
-    app_num, app_name = update.data.split("|")
+    app_num, app_name = update.data.split(b"|")
     app_num = int(app_num)
     options={}
     link = APPS[app_num][2]
@@ -757,21 +757,27 @@ def button(bot, update):
         res = requests.get(link + '/download?from=details', headers=headers).text
         soup = BeautifulSoup(res, "html.parser").find('a', {'id':'download_link'})
         if soup['href']:
-            r = requests.get(soup['href'], stream=True, headers=headers)
+            r = requests.get(soup['href'], stream=True, allow_redirects=True, headers=headers)
             required_file_nam = get_filename_from_cd(r.headers.get('content-disposition'))
-            required_file_name = required_file_nam.strip('\n').replace('\"','')
+            required_file_name = required_file_nam.strip('\n').replace('\"','').replace('\'','').replace('?','').replace(" ", "_")
             with open(required_file_name, 'wb') as file:
-                for chunk in r.iter_content(chunk_size=8192):
-                    total_length = r.headers.get('content-length')
-                    dl = 0
-                    total_length = int(total_length)
-                    if chunk:
-                        dl += len(chunk)
-                        done = int(100 * dl / total_length)
-                        file.write(chunk)
-                        file.flush()
+              total_length = int(r.headers.get('content-length', 0)) or None
+              downloaded_size = 0
+              chunk_size=8192*1024
+              if total_length is None:  # no content length header
+                file.write(r.content)
+              else:
+                dl = 0
+                total_length = int(total_length)
+                for chunk in progress.bar(r.iter_content(chunk_size=chunk_size), expected_size=(total_length / 1024) + 1):
+                if chunk:
+                  dl += len(chunk)
+                  done = int(100 * dl / total_length)
+                  file.write(chunk)
+                  file.flush()
+                  os.fsync(file.fileno())
                         
-        time.sleep(3)
+       
         second_time = time.time()
         t1 = time.time()
         bot.edit_message_text(update.from_user.id, update.message.message_id, download_successfull.format(str(second_time - first_time)[:5]))
@@ -785,13 +791,14 @@ def button(bot, update):
         description = " " + " \r\n ❤️ @Bfas237Bots "
         sent = bot.send_document(update.from_user.id, required_file_name, progress = prog, progress_args = (update.message.message_id, update.from_user.id, required_file_name), caption='**File Size**: {}\n\n**Completed in**:  `{}` **Seconds**\n'.format(str(pretty_size(total_length)), str(int(t2 - t1))), reply_to_message_id=update.message.message_id)
         
-        time.sleep(2)
+        time.sleep(1)
          
         bot.edit_message_caption(update.from_user.id,sent.message_id, caption='{}'.format(description))
      
         os.remove(required_file_name)
     except (BadRequest, Flood, InternalServerError, SeeOther, Unauthorized, UnknownError) as Err:
         bot.edit_message_text(update.from_user.id, update.message.message_id, Err)
+        os.remove(required_file_name)
         return None
       
 if __name__ == "__main__" :
