@@ -20,7 +20,7 @@ from pyrogram import Client, Filters, ReplyKeyboardMarkup, InlineKeyboardMarkup,
 from contextlib import redirect_stdout
 from translation import Translation
 from clint.textui import progress
-
+traceback
 active_chats = {}
 
 import os
@@ -770,36 +770,38 @@ def button(bot, update):
                 dl = 0
                 total_length = int(total_length)
                 for chunk in progress.bar(r.iter_content(chunk_size=chunk_size), expected_size=(total_length / 1024) + 1):
-                if chunk:
-                  dl += len(chunk)
-                  done = int(100 * dl / total_length)
-                  file.write(chunk)
-                  file.flush()
-                  os.fsync(file.fileno())
+                    if chunk:
+                        dl += len(chunk)
+                        done = int(100 * dl / total_length)
+                        file.write(chunk)
+                        file.flush()
+                        os.fsync(file.fileno())
                         
        
-        second_time = time.time()
-        t1 = time.time()
-        bot.edit_message_text(update.from_user.id, update.message.message_id, download_successfull.format(str(second_time - first_time)[:5]))
-        time.sleep(3)
+            second_time = time.time()
+            t1 = time.time()
+            bot.edit_message_text(update.from_user.id, update.message.message_id, download_successfull.format(str(second_time - first_time)[:5]))
+            time.sleep(3)
         
         #bot.delete_messages(update.from_user.id, update.message.message_id)
         
         
-        t2 = time.time()
+            t2 = time.time()
         
-        description = " " + " \r\n ❤️ @Bfas237Bots "
-        sent = bot.send_document(update.from_user.id, required_file_name, progress = prog, progress_args = (update.message.message_id, update.from_user.id, required_file_name), caption='**File Size**: {}\n\n**Completed in**:  `{}` **Seconds**\n'.format(str(pretty_size(total_length)), str(int(t2 - t1))), reply_to_message_id=update.message.message_id)
+            description = " " + " \r\n ❤️ @Bfas237Bots "
+            sent = bot.send_document(update.from_user.id, required_file_name, progress = prog, progress_args = (update.message.message_id, update.from_user.id, required_file_name), caption='**File Size**: {}\n\n**Completed in**:  `{}` **Seconds**\n'.format(str(pretty_size(total_length)), str(int(t2 - t1))), reply_to_message_id=update.message.message_id)
         
-        time.sleep(1)
+            time.sleep(1)
          
-        bot.edit_message_caption(update.from_user.id,sent.message_id, caption='{}'.format(description))
+            bot.edit_message_caption(update.from_user.id,sent.message_id, caption='{}'.format(description))
      
-        os.remove(required_file_name)
-    except (BadRequest, Flood, InternalServerError, SeeOther, Unauthorized, UnknownError) as Err:
+            os.remove(required_file_name)
+        else:
+            bot.edit_message_text(update.from_user.id, update.message.message_id, "No valid Download link was found.\n\n The server terminated all request. Kindly try again")
+    except Exception as Err:
         bot.edit_message_text(update.from_user.id, update.message.message_id, Err)
-        os.remove(required_file_name)
-        return None
+        
+        traceback.print_exc()
       
 if __name__ == "__main__" :
     # create download directory, if not exist
