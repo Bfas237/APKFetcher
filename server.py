@@ -81,7 +81,7 @@ def prog(client, current, total, message_id, chat_id, required_file_name):
    )
   except:
    pass
-def progress(client, current, total, message_id, chat_id):
+def progs(client, current, total, message_id, chat_id):
  if round(current/total*100, 0) % 5 == 0:
   try:
    client.edit_message_text(
@@ -287,7 +287,7 @@ def ft(bot, update):
         
         after_download_file_name = bot.download_media(
             message=reply_message,
-            file_name=download_location, progress = progress, progress_args = (a.message_id, update.from_user.id)
+            file_name=download_location, progress = progs, progress_args = (a.message_id, update.from_user.id)
         )
         filename_w_ext = os.path.basename(after_download_file_name)
         filename, download_extension = os.path.splitext(filename_w_ext)
@@ -364,7 +364,7 @@ def fo(bot, update):
         
         after_download_file_name = bot.download_media(
             message=reply_message,
-            file_name=download_location, progress = progress, progress_args = (a.message_id, update.from_user.id)
+            file_name=download_location, progress = progs, progress_args = (a.message_id, update.from_user.id)
         )
         filename_w_ext = os.path.basename(after_download_file_name)
         filename, download_extension = os.path.splitext(filename_w_ext)
@@ -458,7 +458,7 @@ def search(bot, update):
         reply_to_message_id=update.message_id,
         disable_web_page_preview=True).message_id    
     
-@app.on_callback_query(dynamic_data("start"))
+@app.on_callback_query(dynamic_data(b"start"))
 def start_data(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
@@ -496,7 +496,7 @@ def start_data(bot, update):
     )
 
     
-@app.on_callback_query(dynamic_data("join"))
+@app.on_callback_query(dynamic_data(b"join"))
 def pyrogram_data(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
@@ -520,7 +520,7 @@ def pyrogram_data(bot, update):
         message_id=update.message.message_id
     )        
 
-@app.on_callback_query(dynamic_data("services"))
+@app.on_callback_query(dynamic_data(b"services"))
 def start_data(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
@@ -545,7 +545,7 @@ def start_data(bot, update):
         disable_web_page_preview=True
     )        
 
-@app.on_callback_query(dynamic_data("downl"))
+@app.on_callback_query(dynamic_data(b"downl"))
 def pyrogram_data(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
@@ -570,7 +570,7 @@ def pyrogram_data(bot, update):
     ),
         message_id=update.message.message_id
     ) 
-@app.on_callback_query(dynamic_data("apks"))
+@app.on_callback_query(dynamic_data(b"apks"))
 def pyrogram_data(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
@@ -657,7 +657,7 @@ def command_get_specify_apk(bot, update):
         message_id=sent.message_id,
         disable_web_page_preview=True)
         
-@app.on_callback_query(dynamic_data("help"))
+@app.on_callback_query(dynamic_data(b"help"))
 def pyrogram_data(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
@@ -680,7 +680,7 @@ def pyrogram_data(bot, update):
     )        
     
             
-@app.on_callback_query(dynamic_data("getapk"))
+@app.on_callback_query(dynamic_data(b"getapk"))
 def pyrogram_data(bot, update):
     if active_chats.get(update.from_user.id).get('link') is None:
       search_query = active_chats.get(update.from_user.id).get('search_query')
