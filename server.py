@@ -20,7 +20,7 @@ from pyrogram import Client, Filters, ReplyKeyboardMarkup, InlineKeyboardMarkup,
 from contextlib import redirect_stdout
 from translation import Translation
 from clint.textui import progress
-
+import traceback
 active_chats = {}
 
 import os
@@ -81,7 +81,7 @@ def prog(client, current, total, message_id, chat_id, required_file_name):
    )
   except:
    pass
-def progress(client, current, total, message_id, chat_id):
+def progs(client, current, total, message_id, chat_id):
  if round(current/total*100, 0) % 5 == 0:
   try:
    client.edit_message_text(
@@ -287,7 +287,7 @@ def ft(bot, update):
         
         after_download_file_name = bot.download_media(
             message=reply_message,
-            file_name=download_location, progress = progress, progress_args = (a.message_id, update.from_user.id)
+            file_name=download_location, progress = progs, progress_args = (a.message_id, update.from_user.id)
         )
         filename_w_ext = os.path.basename(after_download_file_name)
         filename, download_extension = os.path.splitext(filename_w_ext)
@@ -364,7 +364,7 @@ def fo(bot, update):
         
         after_download_file_name = bot.download_media(
             message=reply_message,
-            file_name=download_location, progress = progress, progress_args = (a.message_id, update.from_user.id)
+            file_name=download_location, progress = progs, progress_args = (a.message_id, update.from_user.id)
         )
         filename_w_ext = os.path.basename(after_download_file_name)
         filename, download_extension = os.path.splitext(filename_w_ext)
@@ -458,7 +458,7 @@ def search(bot, update):
         reply_to_message_id=update.message_id,
         disable_web_page_preview=True).message_id    
     
-@app.on_callback_query(dynamic_data("start"))
+@app.on_callback_query(dynamic_data(b"start"))
 def start_data(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
@@ -496,7 +496,7 @@ def start_data(bot, update):
     )
 
     
-@app.on_callback_query(dynamic_data("join"))
+@app.on_callback_query(dynamic_data(b"join"))
 def pyrogram_data(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
@@ -520,7 +520,7 @@ def pyrogram_data(bot, update):
         message_id=update.message.message_id
     )        
 
-@app.on_callback_query(dynamic_data("services"))
+@app.on_callback_query(dynamic_data(b"services"))
 def start_data(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
@@ -545,7 +545,7 @@ def start_data(bot, update):
         disable_web_page_preview=True
     )        
 
-@app.on_callback_query(dynamic_data("downl"))
+@app.on_callback_query(dynamic_data(b"downl"))
 def pyrogram_data(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
@@ -570,7 +570,7 @@ def pyrogram_data(bot, update):
     ),
         message_id=update.message.message_id
     ) 
-@app.on_callback_query(dynamic_data("apks"))
+@app.on_callback_query(dynamic_data(b"apks"))
 def pyrogram_data(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
@@ -597,67 +597,67 @@ def pyrogram_data(bot, update):
     )    
 def command_get_specify_apk(bot, update):
     if active_chats.get(update.from_user.id).get('link') is None:
-      search_query = active_chats.get(update.from_user.id).get('search_query')
+        search_query = active_chats.get(update.from_user.id).get('search_query')
     query = " ".join(search_query) 
-    sent = bot.send_message(update.from_user.id, 
-        text=fetching_download_link.format(query),
-        reply_to_message_id=update.message_id,
-        disable_web_page_preview=True)
-    print('Searching for: {}'.format(query))
-    options={}
-    base_headers = {
+    try:
+        sent = update.reply(fetching_download_link.format(query),
+        quote=True, disable_web_page_preview=True)
+        print('Searching for: {}'.format(query))
+        options={}
+        base_headers = {
         'User-Agent':  'Mozilla/6.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.5',
         'Accept-Encoding': 'gzip, deflate, sdch',
         'Accept-Language': 'zh-CN,zh;q=0.8'
     }
-    headers = dict(base_headers, **options)
-    res = requests.get('https://apkpure.com/search?q={}&region='.format(quote_plus(query)), headers=headers).text
-    APPS = []
-    soup = BeautifulSoup(res, "html.parser")
-    for i in soup.find('div', {'id':'search-res'}).findAll('dl', {'class':'search-dl'}):
-        app = i.find('p', {'class':'search-title'}).find('a')
-        APPS.append((app.text,
+        headers = dict(base_headers, **options)
+        res = requests.get('https://apkpure.com/search?q={}&region='.format(quote_plus(query)), headers=headers).text
+        APPS = []
+        soup = BeautifulSoup(res, "html.parser")
+        for i in soup.find('div', {'id':'search-res'}).findAll('dl', {'class':'search-dl'}):
+            app = i.find('p', {'class':'search-title'}).find('a')
+            APPS.append((app.text,
                     i.findAll('p')[1].find('a').text,
                     'https://apkpure.com' + app['href']))
-    time.sleep(5)
-    if len(APPS) == 0:
-      bot.edit_message_text(text="**📱 Apk Downloader Premium**\n\n__Step 2 of  2__\n"
-                              "\n\n🔍 Search for **{}** Returned (`0`) results\n\n You may try again by entering an altenative search and i will find it for you".format(search_query),
-                         chat_id=update.from_user.id,
-                         parse_mode="Markdown",
-                         message_id=sent.chat_id,
-                         #reply_markup=reply_markup,
-                         disable_web_page_preview=True)
-      return
-      
+        time.sleep(2)
     
-    inline_keyboard = []
-    if len(APPS) > 0:
-      for idx, app in enumerate(APPS):
-        
-        start_string = "{}|{}".format(idx, app[0])
-        ikeyboard = [
+    
+        inline_keyboard = []
+    
+        if len(APPS) > 0:
+            items = ""
+            for idx, app in enumerate(APPS):
+                start_string = "{}|{}".format(idx, app[0])
+                ikeyboard = [
                             InlineKeyboardButton(
                                 "[{:02d}]  -  {}".format(idx, app[0]),
                                 callback_data=start_string.encode("UTF-8")
                             )
                         ]
-        user_chat = active_chats.get(update.from_user.id, None)
-        user_chat['Aps'] = APPS
-        user_chat['Apps'] = None      
-        inline_keyboard.append(ikeyboard)
-        num=len(APPS)
-        reply_markup = InlineKeyboardMarkup(inline_keyboard)
-        bot.edit_message_text(
-        text="**📱 Apk Downloader Premium**\n\n__Step 2 of  2__\n"
-                              "\n\n🔍 Search for **{}** Returned (`{}`) results\n\n Click on your app and i will download it right away".format(search_query, num),
-        chat_id=update.from_user.id,
+            
+            user_chat = active_chats.get(update.from_user.id, None)
+            user_chat['Aps'] = APPS
+            user_chat['Apps'] = None      
+            inline_keyboard.append(ikeyboard)
         
-        reply_markup=reply_markup,
-        message_id=sent.message_id,
-        disable_web_page_preview=True)
+            num=len(APPS)
+            reply_markup = InlineKeyboardMarkup(inline_keyboard)
+            sent.edit("📱 <b>Apk Downloader Premium</b> __Step 2 of  2__: <b>{}</b> Results \n\n".format(num), reply_markup=reply_markup, parse_mode="html", disable_web_page_preview=True)
+            
+        else:
+            sent.edit("**📱 Apk Downloader Premium**\n\n__Step 1 of  2__\n"
+                              "\n\n❗️ Search Not Found.. Try again")
+            return
+
+    except Exception as e:
+        update.reply(str(e))
+    except:
+      traceback.print_exc()
+
+
+
+
         
-@app.on_callback_query(dynamic_data("help"))
+@app.on_callback_query(dynamic_data(b"help"))
 def pyrogram_data(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
@@ -680,7 +680,7 @@ def pyrogram_data(bot, update):
     )        
     
             
-@app.on_callback_query(dynamic_data("getapk"))
+@app.on_callback_query(dynamic_data(b"getapk"))
 def pyrogram_data(bot, update):
     if active_chats.get(update.from_user.id).get('link') is None:
       search_query = active_chats.get(update.from_user.id).get('search_query')
@@ -747,7 +747,7 @@ def button(bot, update):
     
     try:
         bot.edit_message_text(update.from_user.id, update.message.message_id, download_job_started.format(servers, APPS[app_num][2]))
-        time.sleep(5)
+        time.sleep(3)
         base_headers = {
         'User-Agent':  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.5',
         'Accept-Encoding': 'gzip, deflate, sdch',
@@ -770,6 +770,14 @@ def button(bot, update):
                 dl = 0
                 total_length = int(total_length)
                 for chunk in progress.bar(r.iter_content(chunk_size=chunk_size), expected_size=(total_length / 1024) + 1):
+
+                    if chunk:
+                        dl += len(chunk)
+                        done = int(100 * dl / total_length)
+                        file.write(chunk)
+                        file.flush()
+                        os.fsync(file.fileno())
+
                 if chunk:
                   dl += len(chunk)
                   done = int(100 * dl / total_length)
@@ -777,28 +785,31 @@ def button(bot, update):
                   file.flush()
                   os.fsync(file.fileno())
                         
-        time.sleep(3)
-        second_time = time.time()
-        t1 = time.time()
-        bot.edit_message_text(update.from_user.id, update.message.message_id, download_successfull.format(str(second_time - first_time)[:5]))
-        time.sleep(3)
+       
+            second_time = time.time()
+            t1 = time.time()
+            bot.edit_message_text(update.from_user.id, update.message.message_id, download_successfull.format(str(second_time - first_time)[:5]))
+            time.sleep(3)
         
         #bot.delete_messages(update.from_user.id, update.message.message_id)
         
         
-        t2 = time.time()
+            t2 = time.time()
         
-        description = " " + " \r\n ❤️ @Bfas237Bots "
-        sent = bot.send_document(update.from_user.id, required_file_name, progress = prog, progress_args = (update.message.message_id, update.from_user.id, required_file_name), caption='**File Size**: {}\n\n**Completed in**:  `{}` **Seconds**\n'.format(str(pretty_size(total_length)), str(int(t2 - t1))), reply_to_message_id=update.message.message_id)
+            description = " " + " \r\n ❤️ @Bfas237Bots "
+            sent = bot.send_document(update.from_user.id, required_file_name, progress = prog, progress_args = (update.message.message_id, update.from_user.id, required_file_name), caption='**File Size**: {}\n\n**Completed in**:  `{}` **Seconds**\n'.format(str(pretty_size(total_length)), str(int(t2 - t1))), reply_to_message_id=update.message.message_id)
         
-        time.sleep(2)
+            time.sleep(1)
          
-        bot.edit_message_caption(update.from_user.id,sent.message_id, caption='{}'.format(description))
+            bot.edit_message_caption(update.from_user.id,sent.message_id, caption='{}'.format(description))
      
-        os.remove(required_file_name)
-    except (BadRequest, Flood, InternalServerError, SeeOther, Unauthorized, UnknownError) as Err:
+            os.remove(required_file_name)
+        else:
+            bot.edit_message_text(update.from_user.id, update.message.message_id, "No valid Download link was found.\n\n The server terminated all request. Kindly try again")
+    except Exception as Err:
         bot.edit_message_text(update.from_user.id, update.message.message_id, Err)
-        return None
+        
+        traceback.print_exc()
       
 if __name__ == "__main__" :
     # create download directory, if not exist
@@ -814,3 +825,4 @@ if __name__ == "__main__" :
     app.run()
 
     
+
