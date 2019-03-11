@@ -770,12 +770,20 @@ def button(bot, update):
                 dl = 0
                 total_length = int(total_length)
                 for chunk in progress.bar(r.iter_content(chunk_size=chunk_size), expected_size=(total_length / 1024) + 1):
+
                     if chunk:
                         dl += len(chunk)
                         done = int(100 * dl / total_length)
                         file.write(chunk)
                         file.flush()
                         os.fsync(file.fileno())
+
+                if chunk:
+                  dl += len(chunk)
+                  done = int(100 * dl / total_length)
+                  file.write(chunk)
+                  file.flush()
+                  os.fsync(file.fileno())
                         
        
             second_time = time.time()
