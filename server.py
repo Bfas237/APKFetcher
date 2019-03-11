@@ -1,7 +1,6 @@
 from utils.typing import *
 from utils.handlers import *
 from utils.dbmanager import loadDB
-
 import logging
  # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
