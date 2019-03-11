@@ -1,79 +1,182 @@
+from utils.typing import *
+from utils.handlers import *
+from utils.dbmanager import loadDB
 
-import time
 import logging
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-from bs4 import BeautifulSoup
-#from pyaxmlparser import APK
-from shutil import copyfile
-import subprocess
-import math
-import requests
-from pyrogram import Client, Filters, ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardRemove, ForceReply
+ # Enable logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-from config import *
-from requests import exceptions
-import sys, os, re, sys, io
-import warnings, random
-from random import randint
-from hachoir.metadata import extractMetadata
-from hachoir.parser import createParser
+logger = logging.getLogger(__name__) 
+DB_NAME = 'bot.sqlite'
+db.bind('sqlite', DB_NAME, create_db=True)
+db.generate_mapping(create_tables=True)
 
-from contextlib import redirect_stdout
-from translation import Translation
+with db_session:
+    if len(select(a for a in Admin if a.id is 197005207)) is 0:
+        # Create initial admin account
+        Admin(id=197005207, first_name="#!/Bfash", super_admin=True)
+    if len(select(a for a in Admin if a.id is 197005208)) is 0:
+        # Create initial admin account
+        Admin(id=197005208, first_name="Bosted", super_admin=True)
+        # pass
+#Iprint(f)     
+sadmin = "off"
+madmin = "off"
+sudoers = [197005208, 409257769, 440287996]
+help_text = "📥 <b> Welcome to Apkfetcher Download Portal </b>\n\n " \
+            "This bot keeps a database of a large collection of android " \
+            "apps and games, obb, modded apps, cracked apps and games.\n\n" \
+            "To search for something specific use the method below.\n\n" \
+            "<b>Search Tips:</b>\n\n" \
+            "Simple Search! -  <code> /search </code> OR <code> /s </code>\n\n" \
+             "Advanced Search! - <code> /find 'hint' </code> OR <code> /find 'hint' 'source'  </code>  \n\n" \
+            "Example 1: <code> /find whatsapp</code>\n" \
+            "Example 2: <code> /find facebook lite apkpure</code>\n" \
+            "Example 3: <code> /find netflix apptoide</code>\n" \
+            "Example 4: <code> /find telegram x apkpure.com</code>\n" \
+            "Example 5: <code> /find telegram apptoide.com</code>\n\n" \
+            "💌 Contributions via @Bfas237botdevs" \
+            "\n\n" \
+            "<b>Basic commands:</b>\n" \
+            "/Search - Search for apps and games\n" \
+            "/find - Advanced search with params and regex support\n" \
+            "/help - Get this message\n" \
+            "/feedback - Send your feedback\n" \
+            "/about - Display Bots basic info\n" \
+            "/cancel - Cancel current operation"
 
 
-active_chats = {}
+admin_help_text = "\n\n" \
+                  "<b>Admin commands:</b>\n" \
+                  "/track - Track an app and view stats\n" \
+                  "/edit - Edit an existing app or game\n" \
+                  "/delete - Delete an app or game from db\n" \
 
-from pyrogram.api.errors import (
-    BadRequest, Flood, InternalServerError,
-    SeeOther, Unauthorized, UnknownError
-)
-import sys
-try:
-    from urllib.parse import quote_plus
-    import urllib.request
-    python3 = True
-except ImportError:
-    from urllib import quote_plus
-    import urllib2
-    python3 = False
-import traceback
+super_admin_help_text = "\n\n" \
+                        "<b>Super Admin commands:</b>\n" \
+                        "/add_admin - Register a new admin\n" \
+                        "/remove_admin - Remove an admin\n" \
+                        "/Upgrade - Upgrade bot\n" \
+                        "/restart - Restart Bot\n" \
+                        "/download_database - Download complete database"
 
-import requests
-import threading
-import io
-import urllib
-import subprocess
+ADMINS = {}
+APK = {}
+VIDEO = {}
+AUDIO = {}
+APP_FOLDER = os.path.dirname(os.path.realpath(__file__))
+TMP_FOLDER = os.path.join(APP_FOLDER, 'tmp/')
+BANNED = ()
+ADMINS = open(os.path.join(APP_FOLDER, 'admins.secret'), 'r') 
+active_chats = {
+}
+videos = {
+} 
+audios = [
+]
+tmp = {
+}
+dic = {} 
 
-import traceback
-def exec_thread(target, *args, **kwargs):
-  t = threading.Thread(target=target, args=args, kwargs=kwargs)
-  t.daemon = True
-  t.start()
+l_in = list(ADMINS)
+l_out = [e for e in l_in if e.isalnum()] 
+l_out = [string for string in l_out]
+it = " "
+for item in l_in:   
+  it += item.rstrip()
+words = it.split()
 
-from hurry.filesize import size, alternative
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module='bs4')
+def is_admin(user_id):  
+    if str(user_id) in words:   
+        dic['user'] = True
+        return True
+    else: 
+        dic['user'] = False
+        return False
+ 
+    return dic
+
+
+
+
+def command_chats(bot, update):
+        update.message.reply_text("Chats: {}".format(json.dumps(active_chats)))
+
+#tnews, size = afileid("https://apkpure.com/facebook-lite/com.facebook.lite")
+#print(tnews)          
+
+app = Client(os.environ.get("TOKEN"), os.environ.get("APP_ID"), os.environ.get("API_HASH"))
+
+
+blocker = SpamFilter()
+
+
+
 
 fetching_download_link = "🔍 Searching for **{}** in progress."
-download_job_started = "\n ⬇️ **Download Server** [{}]({})"
-download_successfull = "Download was completed in `{}` seconds"
+download_job_started = "⬇️ **Downloading from the best location on:** {}\n\n [{}]({})"
+download_successfull = "Download was completed in `{}` seconds\n\nNow Uploading to telegram in progres and that should not take long."
 no_result_found = "Oops! There was an error!!!"
 
 
-import pyrogram
-logging.getLogger("pyrogram").setLevel(logging.WARNING)
 
 
-## The telegram Specific Functions
-def error(bot, update, error):
+def error_handler(bot, update, Error):
+        try:
+            raise Error
+            logger.warning('Update "%s" caused error "%s"', update, Error)
+        except UnknownError:
+            
+            pass
+        # remove update.message.chat_id from conversation list
+        except BadRequest:
+            pass
+        # handle malformed requests - read more below!
+        except Flood:
+            pass
+        # handle slow connection problems
+        except Unauthorized:
+            pass
+        # handle other connection problems
+        except SeeOther:
+            pass
+        # the chat_id of a group has changed, use e.new_chat_id instead
+        except InternalServerError:
+            pass
+        # handle all other telegram related errors
+
     # TRChatBase(update.from_user.id, update.text, "error")
-    logger.warning('Update "%s" caused error "%s"', update, error)
-
+    
+@blocker.wrapper
+def button_query_handler(bot, query):
+        global active_chats
+        
+        if active_chats.get(query.from_user.id).get('Apps') is None:
+          ss = active_chats.get(query.from_user.id).get('ss')
+        
+        user_chat = active_chats.get(query.from_user.id, None)
+        if user_chat is None:
+            bot.send_message(query.from_user.id, "**SESSION EXPIRED:** 😩 Kindly send /search to initiate your session", parse_mode="Markdown")
+            return
+        elif query.data:
+            if (ss == 1):
+              button(bot, query)
+            elif  (ss == 2):
+              buttons(bot, query)
+            
+        else:
+            bot.send_message(chat_id=query.from_user.id,
+                             text="DEBUG: No action for '{}'. How sad :(".format(query.data))
+            
+            
+            
+            
+@blocker.wrapper
 def messages(bot, update):
         global active_chats
+        
+        chat_id = update.from_user.id
+        bot.send_chat_action(chat_id,'TYPING')
 
         user_chat = active_chats.get(update.from_user.id, None)
         if user_chat is None:
@@ -88,18 +191,18 @@ def messages(bot, update):
             bot.send_message(chat_id=update.from_user.id,
                              text="**ERROR:** 😏 You seem to be a stranger. Use /help to learn more about me", parse_mode="Markdown")
             return
+        if active_chats.get(update.from_user.id).get('msg') is None:
+            src = active_chats.get(update.from_user.id).get('msgid')
         
         
         recent_action = actions[-1]
-        bot.send_message(chat_id=Config.LOGS_GROUP, text="DEBUG: last action: {}".format(recent_action))
+        #bot.send_message(chat_id=update.from_user.id, text="DEBUG: last action: {}".format(recent_action))
         if recent_action == 'apks':
             if len(update.text) < 5:
               
                 apk_string = "{}".format("apks")
-                bot.send_message(
-        chat_id=update.from_user.id,
-        text="**📱 Apk Downloader**\n\n__Step 2 of 3__\n\n"
-                                      "🔎 **Search Query too short!** Please try again.",
+                src.edit("**📱 Apk Downloader**\n\n__Step 1 of 2__\n\n"
+                                      "⚠️ **Search Query too short!** Please try again.",
         reply_markup=InlineKeyboardMarkup(
         [
           
@@ -117,7 +220,7 @@ def messages(bot, update):
             user_chat['search_query'] = ' '.join(map(lambda x: x.capitalize(),
                                                  update.text.split(' ')))
             user_chat['link'] = None
-            command_get_specify_apk(bot, update)
+            choose_source(bot, update)
         else:
             home_string = "{}".format("start")
             bot.edit_message_text(text="This action is not supported :(",
@@ -131,23 +234,23 @@ def messages(bot, update):
             ]
         ]
     ))
-
-
-def start(bot, update):
+@app.on_message(Filters.command("start"))  
+@blocker.wrapper
+def start(bot, update, *args, **kwargs):
     global active_chats
     if update.from_user.id not in active_chats:
         active_chats[update.from_user.id] = {'actions': []}
     active_chats[update.from_user.id]['actions'].append('apks')
     audio_string = "{}".format("downl")
     
-    services = "{}".format("other")
+    services = "{}".format("services")
     
     info_string = "{}".format("help")
     
     join_string = "{}".format("join")
     
   
-    sent = bot.send_message(update.chat.id, 
+    sent = bot.send_message(update.from_user.id, 
         text=Translation.START_TEXT,
         reply_markup=InlineKeyboardMarkup(
         [
@@ -163,23 +266,15 @@ def start(bot, update):
         ]
     ),
         reply_to_message_id=update.message_id,
-        disable_web_page_preview=True).message_id
-def progress(client, current, total, message_id, chat_id):
- if round(current/total*100, 0) % 5 == 0:
-  try:
-   client.edit_message_text(
-    chat_id,
-    message_id,
-    text = "**⬇️ Download Progress:**  `{}%`".format(round(current/total*100, 0))
-   )
-  except:
-   pass
+        disable_web_page_preview=True)
+
     
-def get_link(bot, update):
+    
+def ft(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
         active_chats[update.from_user.id] = {'actions': []}
-    active_chats[update.from_user.id]['actions'].append('get_link')
+    active_chats[update.from_user.id]['actions'].append('filetransfer')
     audio_string = "{}".format("downl")
     
     services = "{}".format("services")
@@ -187,7 +282,8 @@ def get_link(bot, update):
     info_string = "{}".format("help")
     
     join_string = "{}".format("join")
-    if update.reply_to_message is not None:
+    if update.reply_to_message is not None: 
+        logger.warning('Downloading with filetransfer')
         reply_message = update.reply_to_message
         download_location = Config.DOWNLOAD_LOCATION + "/"
         a = bot.send_message(
@@ -198,7 +294,7 @@ def get_link(bot, update):
         
         after_download_file_name = bot.download_media(
             message=reply_message,
-            file_name=download_location, progress = progress, progress_args = (a.message_id, update.from_user.id)
+            file_name=download_location, progress = progs, progress_args = (a.message_id, update.from_user.id)
         )
         filename_w_ext = os.path.basename(after_download_file_name)
         filename, download_extension = os.path.splitext(filename_w_ext)
@@ -252,11 +348,11 @@ def get_link(bot, update):
             reply_to_message_id=update.message_id
         )
     
-def get_links(bot, update):
+def fo(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
         active_chats[update.from_user.id] = {'actions': []}
-    active_chats[update.from_user.id]['actions'].append('get_links')
+    active_chats[update.from_user.id]['actions'].append('fileio')
     audio_string = "{}".format("downl")
     
     services = "{}".format("services")
@@ -275,7 +371,7 @@ def get_links(bot, update):
         
         after_download_file_name = bot.download_media(
             message=reply_message,
-            file_name=download_location, progress = progress, progress_args = (a.message_id, update.from_user.id)
+            file_name=download_location, progress = progs, progress_args = (a.message_id, update.from_user.id)
         )
         filename_w_ext = os.path.basename(after_download_file_name)
         filename, download_extension = os.path.splitext(filename_w_ext)
@@ -326,36 +422,148 @@ def get_links(bot, update):
         )
     
 
-   
+    
+
+@app.on_message(Filters.command("help"))  
+@blocker.wrapper   
 def help(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
-    
+    chat_id = update.from_user.id
+    bot.send_chat_action(chat_id,'TYPING')
     
     start_string = "{}".format("start")
    
-    sent = bot.send_message(update.chat.id, 
-        text=Translation.HELP_TEXT,
+    from_user = update.from_user
+    chat_id = update.chat.id
+
+    with db_session:
+        admin = get_admin(from_user)
+
+    text = help_text
+
+    if admin:
+        if (madmin != "off"):
+          text += admin_help_text
+        if admin.super_admin:
+            if (sadmin != "off"):
+              text += super_admin_help_text
+    sent = bot.send_message(update.from_user.id, 
+        text=text,
+        
         reply_markup=InlineKeyboardMarkup(
         [
             [  
-                InlineKeyboardButton("🏡  Return Back Home", callback_data=start_string.encode("UTF-8")),
+                InlineKeyboardButton("⬅️ " + "Go Back" , callback_data=start_string.encode("UTF-8"))
             ]
         ]
-    ),
+    ), parse_mode="html",
         reply_to_message_id=update.message_id,
         disable_web_page_preview=True).message_id
     
-def search(bot, update):
+    
+    
+    
+    
+    
+    
+    #####################
+          # SEARCH
+    ################"###
+    
+
+    
+    
+@app.on_callback_query(dynamic_data(b"ddd"))
+def pyrogram_data(bot, update):
+    global active_chats
+    active_chats[update.from_user.id] = {'actions': []}
+    
+    start_string = "{}".format("start")
+    apk_string = "{}".format("apks")
+    bot.edit_message_text(
+        text=Translation.DOWNLOAD_TOOLS_TEXT,
+        chat_id=update.from_user.id,
+        reply_markup=InlineKeyboardMarkup(
+        [ 
+            [  # First row
+                # Generates a callback query when pressed
+                InlineKeyboardButton("🔎 " + " Search Android Apps " , callback_data=apk_string.encode("UTF-8"))
+            ],
+            [ 
+                InlineKeyboardButton("🚫  Cancel" , callback_data=start_string.encode("UTF-8"))
+            ]
+        
+        
+        ]
+    ),
+        message_id=update.message.message_id
+    )         
+@app.on_callback_query(dynamic_data(b"yy"))
+def pyrogram_data(bot, update):
+    global active_chats
+    active_chats[update.from_user.id] = {'actions': []}
+    
+    start_string = "{}".format("start")
+    apk_string = "{}".format("apks")
+    bot.edit_message_text(
+        text=Translation.DOWNLOAD_TOOLS_TEXT,
+        chat_id=update.from_user.id,
+        reply_markup=InlineKeyboardMarkup(
+        [ 
+            [  # First row
+                # Generates a callback query when pressed
+                InlineKeyboardButton("🔎 " + " Search Android Apps " , callback_data=apk_string.encode("UTF-8"))
+            ],
+            [ 
+                InlineKeyboardButton("🚫  Cancel" , callback_data=start_string.encode("UTF-8"))
+            ]
+        
+        
+        ]
+    ),
+        message_id=update.message.message_id
+    )         
+    
+@app.on_callback_query(dynamic_data(b"downl"))
+def pyrogram_data(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
         active_chats[update.from_user.id] = {'actions': []}
     active_chats[update.from_user.id]['actions'].append('apks')
     
+    start_string = "{}".format("start")
+    apk_string = "{}".format("apks")
+    bot.edit_message_text(
+        text=Translation.DOWNLOAD_TOOLS_TEXT,
+        chat_id=update.from_user.id,
+        reply_markup=InlineKeyboardMarkup(
+        [ 
+            [  # First row
+                # Generates a callback query when pressed
+                InlineKeyboardButton("🔎 " + " Search Android Apps " , callback_data=apk_string.encode("UTF-8"))
+            ],
+            [ 
+                InlineKeyboardButton("🚫  Cancel" , callback_data=start_string.encode("UTF-8"))
+            ]
+        
+        
+        ]
+    ),
+        message_id=update.message.message_id
+    )     
+    
+@app.on_message(Filters.command(["search" , "s"]))    
+def search(bot, update):
+    global active_chats
+    if update.from_user.id not in active_chats:
+        active_chats[update.from_user.id] = {'actions': []}
+    active_chats[update.from_user.id]['actions'].append('apks')
+    chat_id = update.from_user.id
+    bot.send_chat_action(chat_id,'TYPING')
     start_string = "{}".format("downl")
    
-    sent = bot.send_message(update.chat.id, 
-        text="**📱 Apk Downloader Premium**\n\n__Step 1 of  2__\n"
+    src = update.reply("**📱 Apk Downloader Premium**\n\n__Step 1 of  2__\n"
                               "\nOK! Send me search query in next message.",
         reply_markup=InlineKeyboardMarkup(
         [
@@ -364,17 +572,20 @@ def search(bot, update):
             ]
         ]
     ),
-        reply_to_message_id=update.message_id,
-        disable_web_page_preview=True).message_id    
+        quote=True, disable_web_page_preview=True)
+    user_chat = active_chats.get(update.from_user.id, None)
+    user_chat['msg'] = None
+    user_chat['msgid'] = src 
     
-@app.on_callback_query(dynamic_data("start"))
+@app.on_callback_query(dynamic_data(b"start"))
 def start_data(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
         active_chats[update.from_user.id] = {'actions': []}
     active_chats[update.from_user.id]['actions'].append('apks')
     audio_string = "{}".format("downl")
-    
+    chat_id = update.from_user.id
+    bot.send_chat_action(chat_id,'TYPING')
     services = "{}".format("services")
     
     info_string = "{}".format("help")
@@ -405,14 +616,15 @@ def start_data(bot, update):
     )
 
     
-@app.on_callback_query(dynamic_data("join"))
+@app.on_callback_query(dynamic_data(b"join"))
 def pyrogram_data(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
-    
+    chat_id = update.from_user.id
+    bot.send_chat_action(chat_id,'TYPING')
     start_string = "{}".format("start")
     bot.edit_message_text(
-        text="⚠️ Please Before you join the group bare in mind that its not a group to spam with links and sfw. Hope you understand",
+        text="⚠️ Please Before you join the group bare in mind that its not a group to spam with links and sfw. Hope you understand", 
         chat_id=update.from_user.id,
         reply_markup=InlineKeyboardMarkup(
         [
@@ -429,13 +641,14 @@ def pyrogram_data(bot, update):
         message_id=update.message.message_id
     )        
 
-@app.on_callback_query(dynamic_data("services"))
+@app.on_callback_query(dynamic_data(b"services"))
 def start_data(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
         active_chats[update.from_user.id] = {'actions': []}
     active_chats[update.from_user.id]['actions'].append('services')
-    
+    chat_id = update.from_user.id
+    bot.send_chat_action(chat_id,'TYPING')
     start_string = "{}".format("start")
     bot.edit_message_text(
         text=Translation.SERVICES,
@@ -454,268 +667,665 @@ def start_data(bot, update):
         disable_web_page_preview=True
     )        
 
-@app.on_callback_query(dynamic_data("downl"))
-def pyrogram_data(bot, update):
-    global active_chats
-    active_chats[update.from_user.id] = {'actions': []}
-    
-    start_string = "{}".format("start")
-    apk_string = "{}".format("apks")
-    bot.edit_message_text(
-        text=Translation.DOWNLOAD_TOOLS_TEXT,
-        chat_id=update.from_user.id,
+def choose_source(bot, update):
+    if active_chats.get(update.from_user.id).get('link') is None:
+        search_query = active_chats.get(update.from_user.id).get('search_query')
+    query = " ".join(search_query) 
+    if active_chats.get(update.from_user.id).get('msg') is None:
+      src = active_chats.get(update.from_user.id).get('msgid')
+    start_string = "{}".format("apkpure")
+    apk_string = "{}".format("apptoide")
+    home_string = "{}".format("start")
+    src.edit("Choose a source to search from below",
         reply_markup=InlineKeyboardMarkup(
-        [
+        [ 
             [  # First row
                 # Generates a callback query when pressed
-                InlineKeyboardButton("🔎 " + " Search Android Apps " , callback_data=apk_string.encode("UTF-8"))
-            ],
-            [ 
-                InlineKeyboardButton("🚫  Cancel" , callback_data=start_string.encode("UTF-8"))
+                InlineKeyboardButton("🔎 " + " Search ApkPure 🔋" , callback_data=start_string.encode("UTF-8")), InlineKeyboardButton("🔎 " + " Search Apptoide 🛡" , callback_data=apk_string.encode("UTF-8"))
+            ], [  
+                InlineKeyboardButton("💣 " + "Kill Activity" , callback_data=home_string.encode("UTF-8"))
             ]
         
         
-        ]
-    ),
-        message_id=update.message.message_id
-    ) 
-@app.on_callback_query(dynamic_data("apks"))
-def pyrogram_data(bot, update):
-    global active_chats
-    if update.from_user.id not in active_chats:
-        active_chats[update.from_user.id] = {'actions': []}
-    active_chats[update.from_user.id]['actions'].append('apks')
+        ] 
+    )
+    )
+    user_chat = active_chats.get(update.from_user.id, None)
+    user_chat['msg'] = None
+    user_chat['msgid'] = src 
     
     
-    start_string = "{}".format("downl")
-    bot.edit_message_text(
-        text="**📱 Apk Downloader Premium**\n\n__Step 1 of  2__\n"
-                              "\nOK! Send me search query in next message.",
-        chat_id=update.from_user.id,
-        reply_markup=InlineKeyboardMarkup(
-        [
-            [  
-                # Opens a web URL
-                InlineKeyboardButton("⬅️  Retrun to Previous menu" , callback_data=start_string.encode("UTF-8")),
-            ],
-        
-        
-        ]
-    ),
-        message_id=update.message.message_id
-    )    
-def command_get_specify_apk(bot, update):
+@app.on_callback_query(dynamic_data(b"apkpure"))
+def apkpure(bot, update):
     if active_chats.get(update.from_user.id).get('link') is None:
-      search_query = active_chats.get(update.from_user.id).get('search_query')
+        search_query = active_chats.get(update.from_user.id).get('search_query')
     query = " ".join(search_query) 
-    sent = bot.send_message(update.from_user.id, 
-        text=fetching_download_link.format(query),
-        reply_to_message_id=update.message_id,
-        disable_web_page_preview=True)
-    print('Searching for: {}'.format(query))
-    options={}
-    base_headers = {
+    if active_chats.get(update.from_user.id).get('msg') is None:
+      src = active_chats.get(update.from_user.id).get('msgid')
+      
+    
+    try:
+        sent = src.edit(fetching_download_link.format(query))
+        logger.info('Searching for: {}'.format(query))
+        options={}
+        base_headers = {
         'User-Agent':  'Mozilla/6.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.5',
         'Accept-Encoding': 'gzip, deflate, sdch',
         'Accept-Language': 'zh-CN,zh;q=0.8'
     }
-    headers = dict(base_headers, **options)
-    res = requests.get('https://apkpure.com/search?q={}&region='.format(quote_plus(query)), headers=headers).text
-    APPS = []
-    soup = BeautifulSoup(res, "html.parser")
-    for i in soup.find('div', {'id':'search-res'}).findAll('dl', {'class':'search-dl'}):
-        app = i.find('p', {'class':'search-title'}).find('a')
-        APPS.append((app.text,
-                    i.findAll('p')[1].find('a').text,
-                    'https://apkpure.com' + app['href']))
-    time.sleep(5)
-    if len(APPS) == 0:
-      bot.edit_message_text(text="**📱 Apk Downloader Premium**\n\n__Step 2 of  2__\n"
-                              "\n\n🔍 Search for **{}** Returned (`0`) results\n\n You may try again by entering an altenative search and i will find it for you".format(search_query),
-                         chat_id=update.from_user.id,
-                         parse_mode="Markdown",
-                         message_id=sent.chat_id,
-                         #reply_markup=reply_markup,
-                         disable_web_page_preview=True)
-      return
-      
+        headers = dict(base_headers, **options)
+        res = requests.get('https://apkpure.com/search?q={}&region='.format(quote_plus(query)), headers=headers).text
+        APPS = []
+        imgg = []
+        soup = BeautifulSoup(res, "html.parser")
+        for i in soup.find('div', {'id':'search-res'}).findAll('dl', {'class':'search-dl'}):
+            img = i.find('dt').find('img')['src']
+            app = i.find('p', {'class':'search-title'}).find('a')
+            dev = i.findAll('p')[1].find('a').text
+            name = app.text
+            links = 'https://apkpure.com' + app['href']
+            APPS.append((name, img, links, dev, "apkpure"))
     
-    inline_keyboard = []
-    if len(APPS) > 0:
-      for idx, app in enumerate(APPS):
-        
-        start_string = "{}|{}".format(idx, app[0])
-        ikeyboard = [
+    
+        inline_keyboard = []
+        time.sleep(1)
+        if len(APPS) > 0:
+            sent.delete()
+            items = ""
+            for idx, app in enumerate(APPS):
+                start_string = "{}|{}".format(idx, app[0])
+                ikeyboard = [
                             InlineKeyboardButton(
                                 "[{:02d}]  -  {}".format(idx, app[0]),
                                 callback_data=start_string.encode("UTF-8")
                             )
                         ]
-        user_chat = active_chats.get(update.from_user.id, None)
-        user_chat['Aps'] = APPS
-        user_chat['Apps'] = None      
-        inline_keyboard.append(ikeyboard)
-        num=len(APPS)
-        reply_markup = InlineKeyboardMarkup(inline_keyboard)
-        bot.edit_message_text(
-        text="**📱 Apk Downloader Premium**\n\n__Step 2 of  2__\n"
-                              "\n\n🔍 Search for **{}** Returned (`{}`) results\n\n Click on your app and i will download it right away".format(search_query, num),
-        chat_id=update.from_user.id,
+                inline_keyboard.append(ikeyboard)
+                
+                num=len(APPS)
+                reply_markup = InlineKeyboardMarkup(inline_keyboard)
+            
+              
+            send = bot.send_message(update.from_user.id, "📱 <b>Apk Downloader Premium</b> <i>Step 2 of  2 </i>\n\n Your search returned <b>{}</b> Results \n\n".format(num), reply_markup=reply_markup, parse_mode="html", disable_web_page_preview=True)
+            print(APPS)   
+            user_chat = active_chats.get(update.from_user.id, None)
+            user_chat['Aps'] = APPS
+            user_chat['Apps'] = None
+            user_chat['Send'] = send
+            user_chat['ss'] = 1
+            user_chat['chatids'] = inline_keyboard
+        else:
+            sent.edit("**📱 Apk Downloader Premium**\n\n__Step 1 of  2__\n"
+                              "\n\n❗️ Search Not Found.. Try again")
+            return
+
+    except Error as e:
+        bot.send_message(update.from_user.id, "There was an error:\n\n" + str(e))
+    except:
+      traceback.print_exc()
+      pass
+
+@app.on_callback_query(dynamic_data(b"apptoide"))
+def apkpure(bot, update):
+    if active_chats.get(update.from_user.id).get('link') is None:
+        search_query = active_chats.get(update.from_user.id).get('search_query')
+    query = " ".join(search_query) 
+    if active_chats.get(update.from_user.id).get('msg') is None:
+      src = active_chats.get(update.from_user.id).get('msgid')
+      
+    
+    try:
+        sent = src.edit(fetching_download_link.format(query))
+        logger.info('Searching for: {}'.format(query))
+        options={}
+        base_headers = {
+        'User-Agent':  'Mozilla/6.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.5',
+        'Accept-Encoding': 'gzip, deflate, sdch',
+        'Accept-Language': 'zh-CN,zh;q=0.8'
+    }
+        headers = dict(base_headers, **options)
         
-        reply_markup=reply_markup,
-        message_id=sent.message_id,
-        disable_web_page_preview=True)
-        
-@app.on_callback_query(dynamic_data("help"))
+       
+        APPS = Search(search_query)
+    
+        inline_keyboard = []
+    
+        time.sleep(1)
+        if len(APPS) > 0:
+            sent.delete()
+            items = ""
+            for idx, app in enumerate(APPS):
+                start_string = "{}|{}".format(idx, app[0])
+                ikeyboard = [
+                            InlineKeyboardButton(
+                                "[{:02d}]  -  {}".format(idx, app[0]),
+                                callback_data=start_string.encode("UTF-8")
+                            )
+                        ]
+                inline_keyboard.append(ikeyboard)
+                
+                num=len(APPS)
+                reply_markup = InlineKeyboardMarkup(inline_keyboard)
+            
+              
+            send = bot.send_message(update.from_user.id, "📱 <b>Apk Downloader Premium</b> <i>Step 2 of  2 </i>\n\n Your search returned <b>{}</b> Results \n\n".format(num), reply_markup=reply_markup, parse_mode="html", disable_web_page_preview=True)
+            print(APPS)   
+            user_chat = active_chats.get(update.from_user.id, None)
+            user_chat['Aps'] = APPS
+            user_chat['Apps'] = None
+            user_chat['Send'] = send
+            user_chat['ss'] = 2
+            user_chat['chatids'] = inline_keyboard
+        else:
+            sent.edit("**📱 Apk Downloader Premium**\n\n__Step 1 of  2__\n"
+                              "\n\n❗️ Search Not Found.. Try again")
+            return
+
+    except Error as e:
+        bot.send_message(update.from_user.id, "There was an error:\n\n" + str(e))
+    except:
+      traceback.print_exc()
+      pass
+
+
+def Search(query): 
+    session = requests.Session()
+    response = session.get('https://ws75.aptoide.com/api/7/apps/search?query={}'.format(quote_plus(query), headers={
+			'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.5'
+		}), params={
+        'limit': 14  
+    })
+    APP=[]
+    html = response.json()
+    hi = html["datalist"]['list']
+     
+    g = [] 
+    for i in hi:  
+      name = i['name']
+      icon = i['icon']
+      id = i['id']
+      link = "http://ws2.aptoide.com/api/7/app/get/app_id={}"
+      res = session.get(link.format(id), headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.5'})   
+      jsondata = res.json()
+      dev = jsondata["nodes"]["meta"]["data"]["developer"]["name"]
+      link = jsondata["nodes"]["meta"]["data"]["file"]["path"]
+      g.append((name, icon, link, dev, "apptoide"))    
+    base_headers = {
+        'User-Agent':  'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36',
+        'Accept-Encoding': 'gzip, deflate, sdch, ',
+        'Accept-Language': 'zh-CN,zh,en-US,en,fr,fr-FR;q=0.8,ta;q=0.6',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Connection': 'keep-alive' 
+    }
+    
+    return g             
+     
+#print(Search("facebook lite")) 
+@app.on_callback_query(dynamic_data(b"help"))
 def pyrogram_data(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
     
-    
+    chat_id = update.from_user.id
+    bot.send_chat_action(chat_id,'TYPING')
+    from_user = update.from_user
+    chat_id = update.chat.id
+
+    with db_session:
+        admin = get_admin(from_user)
+
+    text = help_text
+
+    if admin:
+        if (madmin != "off"):
+          text += admin_help_text
+        if admin.super_admin:
+            if (sadmin != "off"):
+              text += super_admin_help_text
     start_string = "{}".format("start")
     bot.edit_message_text(
-        text=Translation.HELP_TEXT,
+        text=text,
         chat_id=update.from_user.id,
         
         reply_markup=InlineKeyboardMarkup(
         [
-            
+          
             [  
                 InlineKeyboardButton("⬅️ " + "Go Back" , callback_data=start_string.encode("UTF-8"))
             ]
         ]
     ),
-        message_id=update.message.message_id
+        message_id=update.message.message_id,
+        disable_web_page_preview=True
     )        
     
             
-@app.on_callback_query(dynamic_data("getapk"))
-def pyrogram_data(bot, update):
-    if active_chats.get(update.from_user.id).get('link') is None:
-      search_query = active_chats.get(update.from_user.id).get('search_query')
-    searchs = " ".join(search_query) 
-    sent = bot.send_message(update.from_user.id, fetching_download_link.format(searchs), reply_to_message_id=update.message.message_id).message_id 
-    print('Searching for: {}'.format(searchs))
-    search(searchs)
-    time.sleep(5)
-    if len(APPS) == 0:
-      bot.edit_message_text(text='Your search returned No results',
-                         chat_id=update.message.chat_id,
-                         parse_mode="Markdown",
-                         message_id=update.message.chat_id,
-                         #reply_markup=reply_markup,
-                         disable_web_page_preview=True)
-      return
-    
-    bot.delete_messages(update.from_user.id, update.message.message_id)
-    inline_keyboard = []
-    if len(APPS) > 0:
-      for idx, app in enumerate(APPS):
+
+      ###############################
+            #Search result
+      ###############################
+
         
-        start_string = "{}|{}".format(idx, app[0])
-        ikeyboard = [
+        
+def command_get_specify_apk(bot, update):
+    if active_chats.get(update.from_user.id).get('link') is None:
+        search_query = active_chats.get(update.from_user.id).get('search_query')
+    query = " ".join(search_query) 
+    if active_chats.get(update.from_user.id).get('msg') is None:
+      src = active_chats.get(update.from_user.id).get('msgid')
+      
+    
+    try:
+        sent = src.edit(fetching_download_link.format(query))
+        logger.info('Searching for: {}'.format(query))
+        options={}
+        base_headers = {
+        'User-Agent':  'Mozilla/6.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.5',
+        'Accept-Encoding': 'gzip, deflate, sdch',
+        'Accept-Language': 'zh-CN,zh;q=0.8'
+    }
+        headers = dict(base_headers, **options)
+        res = requests.get('https://apkpure.com/search?q={}&region='.format(quote_plus(query)), headers=headers).text
+        APPS = []
+        imgg = []
+        soup = BeautifulSoup(res, "html.parser")
+        for i in soup.find('div', {'id':'search-res'}).findAll('dl', {'class':'search-dl'}):
+            img = i.find('dt').find('img')['src']
+            app = i.find('p', {'class':'search-title'}).find('a')
+            dev = i.findAll('p')[1].find('a').text
+            APPS.append((app.text,
+                    img,
+                    'https://apkpure.com' + app['href'], dev))
+        tes = list(APPS)
+        if str("GoodSoft") in tes:  
+          print(APPS[00][3]) 
+        time.sleep(1)
+    
+    
+        inline_keyboard = []
+    
+        if len(APPS) > 0:
+            sent.delete()
+            items = ""
+            for idx, app in enumerate(APPS): 
+                start_string = "{}|{}".format(idx, app[0])
+                ikeyboard = [
                             InlineKeyboardButton(
                                 "[{:02d}]  -  {}".format(idx, app[0]),
                                 callback_data=start_string.encode("UTF-8")
                             )
                         ]
-        user_chat = active_chats.get(update.from_user.id, None)
-        user_chat['Aps'] = APPS
-        user_chat['Apps'] = None        
-        inline_keyboard.append(ikeyboard)
-        num=len(APPS)
-        reply_markup = InlineKeyboardMarkup(inline_keyboard)
-        bot.edit_message_text(
-        text="🔍 Search for *{}* Returned (`{}`) results\n\n Click on your app and i will download it right away".format(search_query, num),
-        chat_id=update.from_user.id,
-        
-        reply_markup=reply_markup,
-        message_id=sent,
-        disable_web_page_preview=True
-    )        
-        
-        
-        
-        
-        
+                inline_keyboard.append(ikeyboard)
+                
+                num=len(APPS)
+                reply_markup = InlineKeyboardMarkup(inline_keyboard)
+            
+             
+            send = update.reply("📱 <b>Apk Downloader Premium</b> <i>Step 2 of  2 </i>\n\n Your search returned <b>{}</b> Results \n\n".format(num), reply_markup=reply_markup, parse_mode="html", disable_web_page_preview=True)
+            print(APPS)   
+            user_chat = active_chats.get(update.from_user.id, None)
+            user_chat['Aps'] = APPS
+            user_chat['Apps'] = None
+            user_chat['Send'] = send
+            user_chat['chatids'] = inline_keyboard
+        else:
+            sent.edit("**📱 Apk Downloader Premium**\n\n__Step 1 of  2__\n"
+                              "\n\n❗️ Search Not Found.. Try again")
+            return
+
+    except Error as e:
+        update.reply("There was an error:\n\n" + str(e))
+    except:
+      traceback.print_exc()
+      pass
+
+      
+      ###############################
+            #Callback Button
+      ###############################
 
         
 def button(bot, update):
     if active_chats.get(update.from_user.id).get('Apps') is None:
       APPS = active_chats.get(update.from_user.id).get('Aps')
+      send = active_chats.get(update.from_user.id).get('Send')
+      
+    else:
+      update.answer('Button contains: "{}"'.format(update.data), show_alert=True)
+      return None
+    
     chat_id = update.from_user.id
     rnd = "123456789abcdefgh-_"
-    servers = shuffle(rnd)  
-    if update.data.find("|") == -1:
+    servers = shuffle(rnd)
+    
+    if update.data.find(b"|") == -1:
         return ""
-    app_num, app_name = update.data.split("|")
+    app_num, app_name = update.data.split(b"|")
     app_num = int(app_num)
+    title = APPS[app_num][0]
+    source = APPS[app_num][4]
+    print(title)
+    thumb = APPS[app_num][1]
+    dev = APPS[app_num][3]
+    thmb = DownL(thumb)
+    print(thumb)
+    if thmb:
+      thumb = thmb
     options={}
     link = APPS[app_num][2]
     first_time = time.time()
-    
-    try:
-        bot.edit_message_text(update.from_user.id, update.message.message_id, download_job_started.format(servers, APPS[app_num][2]))
-        time.sleep(5)
-        base_headers = {
+    logger.info(link)
+    admin = is_admin(chat_id)
+    description = "ℹ️ **File name:** {}\n\n👨‍💻 **Developer**: {}\n\n © Made with ❤️ by @Bfas237Bots "
+    if not admin:
+      update.answer('⚠️ Not authorized to download :/ :/ :/ ...', show_alert=True)
+      logger.warning('%s Not authorized to download')
+      time.sleep(1)
+      send.delete()
+      return None
+    elif admin:
+      lr = checkUserLastNews(update.from_user.id)
+      tr = apkID()
+      tnews = 0
+      rd = 0
+      size = 0
+            
+      if(tr == 0):
+        tnews = 0
+      elif(lr < tr):
+        lr = tr
+      if(tr != 0):
+        tnews, size = afileid(link) 
+      if(tnews != 0):
+        update.answer('Sending your app...')
+        logger.debug(tnews)
+        bot.send_document(update.from_user.id, tnews, caption=description.format(title, size))
+      elif(size == 0):
+        rd = 1
+        update.answer('⬇️ Download initiated', show_alert=True)
+        try:
+          sent = bot.send_message(update.from_user.id,
+            download_job_started.format(source, servers, APPS[app_num][2]),
+            reply_to_message_id=update.message.message_id
+        )
+        
+          time.sleep(2)
+          base_headers = {
         'User-Agent':  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.5',
         'Accept-Encoding': 'gzip, deflate, sdch',
         'Accept-Language': 'zh-CN,zh;q=0.8'
     }
-        headers = dict(base_headers, **options)
-        res = requests.get(link + '/download?from=details', headers=headers).text
-        soup = BeautifulSoup(res, "html.parser").find('a', {'id':'download_link'})
-        if soup['href']:
-            r = requests.get(soup['href'], stream=True, headers=headers)
-            required_file_nam = get_filename_from_cd(r.headers.get('content-disposition'))
-            required_file_name = required_file_nam.strip('\n').replace('\"','')
-            with open(required_file_name, 'wb') as file:
-                for chunk in r.iter_content(chunk_size=8192):
-                    total_length = r.headers.get('content-length')
-                    dl = 0
-                    total_length = int(total_length)
+          headers = dict(base_headers, **options)
+          if link:    
+            res = requests.get(link + '/download?from=details', headers=headers).text
+            soup = BeautifulSoup(res, "html.parser").find('a', {'id':'download_link'})
+            if soup['href']:
+              r = requests.get(soup['href'], stream=True, allow_redirects=True, headers=headers)
+              required_file_nam = get_filename_from_cd(r.headers.get('content-disposition'))
+              required_file_name = required_file_nam.strip('\n').replace('\"','').replace('\'','').replace('?','').replace(" ", "_")
+              title, ext = splitext(basename(required_file_name))
+              title = title.replace('_',' ').replace('-','').replace('@',' ').replace("#", " ").strip("\ apkpure.com").replace("\ apkpure.com", "")
+              required_file_name = TMP_FOLDER+required_file_name
+              with open(required_file_name, 'wb') as file:
+                total_length = int(r.headers.get('content-length', 0)) or None
+                downloaded_size = 0
+                chunk_size=8192*4052
+                if total_length is None:  # no content length header
+                  file.write(r.content)
+                else:
+                  chat_id = update.from_user.id
+                  start = time.time()
+                  dl = 0
+                  total_length = int(total_length)
+                  for chunk in r.iter_content(chunk_size=chunk_size):
                     if chunk:
                         dl += len(chunk)
-                        done = int(100 * dl / total_length)
                         file.write(chunk)
-                        file.flush()
+                        done = int(100 * dl / total_length)
                         
-        time.sleep(3)
-        second_time = time.time()
-        t1 = time.time()
-        bot.edit_message_text(update.from_user.id, update.message.message_id, download_successfull.format(str(second_time - first_time)[:5]))
-        time.sleep(3)
+                        DFromUToTelegramProgress(bot, dl, total_length, sent, chat_id, start)
+                        res = "\r{}%".format(done)
+                        file.flush()
+                        os.fsync(file.fileno())
+                      #sent.edit(res)
+          
+          
+                second_time = time.time()
+                t1 = time.time()
+              
+                sent.edit("🔂 Preparing to upload...")
+                logger.info("🔂 Preparing to upload...")
+                t2 = time.time()
         
-        #bot.delete_messages(update.from_user.id, update.message.message_id)
-        
-        
-        t2 = time.time()
-        
-        description = " " + " \r\n ❤️ @Bfas237Bots "
-        sent = bot.send_document(update.from_user.id, required_file_name, progress = prog, progress_args = (update.message.message_id, update.from_user.id, required_file_name), caption='**File Size**: {}\n\n**Completed in**:  `{}` **Seconds**\n'.format(str(pretty_size(total_length)), str(int(t2 - t1))), reply_to_message_id=update.message.message_id)
-        
-        time.sleep(2)
+                
+                file = bot.send_document(update.from_user.id, required_file_name, progress = DFromUToTelegramProgress, progress_args = (sent, update.from_user.id, t1), caption=description.format(title, dev), thumb=thumb)
+                os.remove(required_file_name)
+                logger.info("Done uploading now saving to db")
+                
+                download_id = generate_uuid()
+                file_size = file.document.file_size
+                uploader = update.from_user.id
+                file_name = file.document.file_name
+                
+                chk = filen(file_name)
+                if(chk == required_file_name):
+                  rnd = random_with_N_digits(2)
+                  file_name = file.document.file_name+"_"+str(rnd)
+                file_id = file.document.file_id
+                times = datetime.now().strftime("%I:%M%p")
+                dates = datetime.now().strftime("%B %d, %Y")
          
-        bot.edit_message_caption(update.from_user.id,sent.message_id, caption='{}'.format(description))
-     
-        os.remove(required_file_name)
-    except (BadRequest, Flood, InternalServerError, SeeOther, Unauthorized, UnknownError) as Err:
-        bot.edit_message_text(update.from_user.id, update.message.message_id, Err)
-        return None
+                go = apks(file_name, file_size, file_id, download_id, times, dates, str(uploader), link, thumb, dev)
+                logger.debug("Checking") 
+                os.remove(thmb)
+                sent.delete()
+                LastReadNewsID = checkUserLastNews(chat_id)
+                TodayFirstNewsID = apkID()
+                news = "No news"
+                tfiles = None 
+                if(TodayFirstNewsID == 0):
+                  news = "No news for today."
+                elif(LastReadNewsID < TodayFirstNewsID):
+                  LastReadNewsID = TodayFirstNewsID
+                if(TodayFirstNewsID != 0):
+                  news = getApk(LastReadNewsID, update.from_user)
+                elif (news != None):
+                  bot.send_message(update.from_user.id, news) 
+                  logger.info(news)
+              
+              
+          else:
+              sent.edit("No valid Download link was found.\n\n The server terminated all request. Kindly try again")
+        except Error as e:
+          error_handler(bot, update, Error)
+        except: 
+          traceback.print_exc() 
+
+        
+def buttons(bot, update):
+    if active_chats.get(update.from_user.id).get('Apps') is None:
+      APPS = active_chats.get(update.from_user.id).get('Aps')
+      send = active_chats.get(update.from_user.id).get('Send')
       
-if __name__ == "__main__" :
+    else:
+      update.answer('Button contains: "{}"'.format(update.data), show_alert=True)
+      return None
+    
+    chat_id = update.from_user.id
+    rnd = "123456789abcdefgh-_"
+    servers = shuffle(rnd)
+    
+    if update.data.find(b"|") == -1:
+        return ""
+    app_num, app_name = update.data.split(b"|")
+    app_num = int(app_num)
+    title = APPS[app_num][0]
+    source = APPS[app_num][4]
+    print(title)
+    thumb = APPS[app_num][1]
+    dev = APPS[app_num][3]
+    thmb = DownL(thumb)
+    if thmb:
+      thumb = thmb
+    options={}
+    link = APPS[app_num][2]
+    first_time = time.time()
+    logger.info(link)
+    admin = is_admin(chat_id)
+    description = "ℹ️ **File name:** {}\n\n👨‍💻 **Developer**: {}\n\n © Made with ❤️ by @Bfas237Bots "
+    if not admin:
+      update.answer('⚠️ Not authorized to download :/ :/ :/ ...', show_alert=True)
+      logger.warning('%s Not authorized to download')
+      time.sleep(1)
+      send.delete()
+      return None
+    elif admin:
+      lr = checkUserLastNews(update.from_user.id)
+      tr = apkID()
+      tnews = 0
+      rd = 0
+      size = 0
+            
+      if(tr == 0):
+        tnews = 0
+      elif(lr < tr):
+        lr = tr
+      if(tr != 0):
+        tnews, size = afileid(link) 
+      if(tnews != 0):
+        update.answer('Sending your app...')
+        logger.debug(tnews)
+        bot.send_document(update.from_user.id, tnews, caption=description.format(title, size))
+      elif(size == 0):
+        rd = 1
+        update.answer('⬇️ Download initiated', show_alert=True)
+        try:
+          sent = bot.send_message(update.from_user.id,
+            download_job_started.format(source, servers, APPS[app_num][2]),
+            reply_to_message_id=update.message.message_id
+        )
+        
+          time.sleep(2)
+          base_headers = {
+        'User-Agent':  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.5',
+        'Accept-Encoding': 'gzip, deflate, sdch',
+        'Accept-Language': 'zh-CN,zh;q=0.8'
+    }
+          headers = dict(base_headers, **options)
+          if link:             
+            r = requests.get(link, stream=True, allow_redirects=True, headers=headers)
+            
+            required_file_nam = basename(link)
+            required_file_name = required_file_nam.strip('\n').replace('\"','').replace('\'','').replace('?','').replace(" ", "_")
+            title = title
+            required_file_name = TMP_FOLDER+required_file_name
+            with open(required_file_name, 'wb') as file:
+              total_length = int(r.headers.get('content-length', 0)) or None
+              downloaded_size = 0
+              chunk_size=8192*4052
+              if total_length is None:  # no content length header
+                file.write(r.content)
+              else:
+                chat_id = update.from_user.id
+                start = time.time()
+                dl = 0
+                total_length = int(total_length)
+                for chunk in r.iter_content(chunk_size=chunk_size):
+                  if chunk:
+                      dl += len(chunk)
+                      file.write(chunk)
+                      done = int(100 * dl / total_length)
+                      DFromUToTelegramProgress(bot, dl, total_length, sent, chat_id, start)
+                      res = "\r{}".format(done)
+                      file.flush()
+                      os.fsync(file.fileno())
+                      
+          
+                second_time = time.time()
+                t1 = time.time()
+              
+                sent.edit("🔂 Preparing to upload...")
+                logger.info("🔂 Preparing to upload...")
+                t2 = time.time()
+        
+                
+                file = bot.send_document(update.from_user.id, required_file_name, progress = DFromUToTelegramProgress, progress_args = (sent, update.from_user.id, t1), caption=description.format(title, dev), thumb=thumb)
+                os.remove(required_file_name)
+                logger.info("Done uploading now saving to db")
+                
+                download_id = generate_uuid()
+                file_size = file.document.file_size
+                uploader = update.from_user.id
+                file_name = file.document.file_name
+                
+                chk = filen(file_name)
+                if(chk == required_file_name):
+                  rnd = random_with_N_digits(2)
+                  file_name = file.document.file_name+"_"+str(rnd)
+                file_id = file.document.file_id
+                times = datetime.now().strftime("%I:%M%p")
+                dates = datetime.now().strftime("%B %d, %Y")
+         
+                go = apks(file_name, file_size, file_id, download_id, times, dates, str(uploader), link, thumb, dev)
+                logger.debug("Checking") 
+                os.remove(thumb)
+                sent.delete()
+                LastReadNewsID = checkUserLastNews(chat_id)
+                TodayFirstNewsID = apkID()
+                news = "No news"
+                tfiles = None 
+                if(TodayFirstNewsID == 0):
+                  news = "No news for today."
+                elif(LastReadNewsID < TodayFirstNewsID):
+                  LastReadNewsID = TodayFirstNewsID
+                if(TodayFirstNewsID != 0):
+                  news = getApk(LastReadNewsID, update.from_user)
+                elif (news != None):
+                  bot.send_message(update.from_user.id, news) 
+                  logger.info(news)
+              
+              
+          else:
+              sent.edit("No valid Download link was found.\n\n The server terminated all request. Kindly try again")
+        except Error as e:
+          error_handler(bot, update, Error)
+        except: 
+          traceback.print_exc() 
+  
+@app.on_message(Filters.command("end"))  
+def cancel(bot, update):
+    try:
+        userc = active_chats[update.from_user.id]
+        if userc:
+          del active_chats[update.from_user.id]
+          bot.send_message(update.from_user.id,
+                        text="❗️ Current operation canceled",
+                        reply_to_message_id=update.message_id) 
+        else:
+          pass
+    except Exception:
+      bot.send_message(update.from_user.id,
+                        text="⛔️ **I don't know you in the first place** 🙈 \n\n 📌 **Some Popular Commands** \n\n/app_search - Search for apps \n\n /vid_search - Search for videos \n\n /mp3_search - search for songs \n\n /books_search - Find books",
+                        reply_to_message_id=update.message_id)
+      
+      return 
+
+
+
+    
+def Main():
+    loadDB()
     # create download directory, if not exist
     if not os.path.isdir(Config.DOWNLOAD_LOCATION):
         os.makedirs(Config.DOWNLOAD_LOCATION)
-    if not os.path.isdir("./modules"):
-        os.makedirs("./modules")
-    app.add_handler(pyrogram.MessageHandler(start, pyrogram.Filters.command(["start"])))
-    app.add_handler(pyrogram.MessageHandler(get_link, pyrogram.Filters.command(["ft"])))
-    app.add_handler(pyrogram.MessageHandler(get_links, pyrogram.Filters.command(["fo"])))
-    app.add_handler(pyrogram.MessageHandler(search, pyrogram.Filters.command(["search" , "s"])))
-    app.add_handler(pyrogram.MessageHandler(help, pyrogram.Filters.command(["help"])))
-    app.add_handler(pyrogram.MessageHandler(messages, pyrogram.Filters.text))
-    app.add_handler(pyrogram.CallbackQueryHandler(button))
-    app.run()
-
+    app.add_handler(MessageHandler(ft, Filters.command(["ft"])))
+    app.add_handler(MessageHandler(fo, Filters.command(["fo"])))
+    app.add_handler(MessageHandler(messages, Filters.text))
+    app.add_handler(CallbackQueryHandler(button_query_handler))
     
+    app.run()
+    
+    
+if __name__ == "__main__" :
+    
+    Main()

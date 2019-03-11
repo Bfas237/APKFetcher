@@ -1,0 +1,3 @@
+400	BUTTON_DATA_INVALID	<class 'pyrogram.api.functions.messages.send_message.SendMessage'>
+400	BUTTON_DATA_INVALID	<class 'pyrogram.api.functions.messages.send_message.SendMessage'>
+400	BUTTON_DATA_INVALID	<class 'pyrogram.api.functions.messages.send_message.SendMessage'>

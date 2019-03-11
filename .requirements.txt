@@ -1,8 +1,7 @@
 requests
+https://github.com/pyrogram/pyrogram/archive/develop.zip
+TgCrypto
 bs4
-apkdl
-pyrogram[fast]==0.9.3
-hachoir
-Tgcrypto
-tldextract
-hurry.filesize
+html5lib 
+filetype
+pony
