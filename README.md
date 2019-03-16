@@ -7,26 +7,20 @@
 
 Requirements
 -------
-- An awesome mtproto client `Pyrogram`
-- beautifulshop
-- Requests library
-- pony
-- filetype
-- tgcrypto
-- html5lib
+- Pyrogram
+- Bs4
+- Requests
 
 ## How to run the bot
 ----------------------
 
- `To be opdated` 
+ `To be Updated` 
 
 
 Contributions
 ------------
 
- `To be opdated` 
+ `To be Updated` 
 
 Made by [Brulite](https://github.com/brulite/)
 -------------------
-
-
