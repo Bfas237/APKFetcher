@@ -286,8 +286,9 @@ def afileid(fid):
     if row is None:
         tfid  = 0 
         size = 0
+        dev = 0
     else: 
         tfid = row[3] 
-        size = row[11]
+        dev = row[11]
     cur.close()  
-    return (tfid, size) 
+    return (tfid, dev) 

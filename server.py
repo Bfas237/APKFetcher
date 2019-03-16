@@ -3,21 +3,18 @@ from utils.handlers import *
 from utils.dbmanager import loadDB
 import logging
  # Enable logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logging.basicConfig(filename='/tmp/foobar.log', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO) 
+ 
+def exception_hook(exc_type, exc_value, exc_traceback):
+    logging.error(
+        "Uncaught exception",
+        exc_info=(exc_type, exc_value, exc_traceback)
+    )  
 
-logger = logging.getLogger(__name__) 
-DB_NAME = 'bot.sqlite'
-db.bind('sqlite', DB_NAME, create_db=True)
-db.generate_mapping(create_tables=True)
+sys.excepthook = exception_hook
+logger = logging.getLogger(__name__)  
+APP_FOLDER = os.path.dirname(os.path.realpath(__file__))
 
-with db_session:
-    if len(select(a for a in Admin if a.id is 197005207)) is 0:
-        # Create initial admin account
-        Admin(id=197005207, first_name="#!/Bfash", super_admin=True)
-    if len(select(a for a in Admin if a.id is 197005208)) is 0:
-        # Create initial admin account
-        Admin(id=197005208, first_name="Bosted", super_admin=True)
-        # pass
 #Iprint(f)     
 sadmin = "off"
 madmin = "off"
@@ -33,8 +30,7 @@ help_text = "📥 <b> Welcome to Apkfetcher Download Portal </b>\n\n " \
             "Example 2: <code> /find facebook lite apkpure</code>\n" \
             "Example 3: <code> /find netflix apptoide</code>\n" \
             "Example 4: <code> /find telegram x apkpure.com</code>\n" \
-            "Example 5: <code> /find telegram apptoide.com</code>\n\n" \
-            "💌 Contributions via @Bfas237botdevs" \
+            "Example 5: <code> /find telegram apptoide.com</code>" \
             "\n\n" \
             "<b>Basic commands:</b>\n" \
             "/Search - Search for apps and games\n" \
@@ -42,7 +38,8 @@ help_text = "📥 <b> Welcome to Apkfetcher Download Portal </b>\n\n " \
             "/help - Get this message\n" \
             "/feedback - Send your feedback\n" \
             "/about - Display Bots basic info\n" \
-            "/cancel - Cancel current operation"
+            "/cancel - Cancel current operation\n\n" \
+            "💌 Contributions via @Bfas237botdevs" 
 
 
 admin_help_text = "\n\n" \
@@ -61,18 +58,14 @@ super_admin_help_text = "\n\n" \
 
 ADMINS = {}
 APK = {}
-VIDEO = {}
-AUDIO = {}
-APP_FOLDER = os.path.dirname(os.path.realpath(__file__))
+
 TMP_FOLDER = os.path.join(APP_FOLDER, 'tmp/')
+ 
 BANNED = ()
 ADMINS = open(os.path.join(APP_FOLDER, 'admins.secret'), 'r') 
 active_chats = {
 }
-videos = {
-} 
-audios = [
-]
+downloads = {} 
 tmp = {
 }
 dic = {} 
@@ -113,19 +106,19 @@ blocker = SpamFilter()
 
 
 fetching_download_link = "🔍 Searching for **{}** in progress."
-download_job_started = "⬇️ **Downloading from the best location on:** {}\n\n [{}]({})"
+download_job_started = "⬇️ **Downloading from the best location on:**\n\n [{}]({})"
 download_successfull = "Download was completed in `{}` seconds\n\nNow Uploading to telegram in progres and that should not take long."
 no_result_found = "Oops! There was an error!!!"
 
 
 
 
-def error_handler(bot, update, Error):
+def error_handler(bot, update, e):
         try:
-            raise Error
-            logger.warning('Update "%s" caused error "%s"', update, Error)
-        except UnknownError:
+            raise e
+            logger.warning('Update "%s" caused error "%s"', update, e)
             
+        except UnknownError:
             pass
         # remove update.message.chat_id from conversation list
         except BadRequest:
@@ -145,27 +138,125 @@ def error_handler(bot, update, Error):
         # handle all other telegram related errors
 
     # TRChatBase(update.from_user.id, update.text, "error")
-    
+#DownL("https://www.rspcansw.org.au/wp-content/themes/noPhotoFound.png")
+def compDom(URL1,URL2):
+  URL1Split = URL1.split(".")
+  URL2Split = URL2.split(".")
+  a = URL1Split[::-1]
+  b = URL2Split[::-1]
+  domain1 = a[1] + "." + a[0]
+  domain2 = b[1] + "." + b[0]
+  if domain1 == domain2:
+      return 1
+  else:
+      return 0
+#print(compDom("https://www.rspcansw.org.au", "rspcansw.org.au"))   
 @blocker.wrapper
 def button_query_handler(bot, query):
         global active_chats
-        
-        if active_chats.get(query.from_user.id).get('Apps') is None:
-          ss = active_chats.get(query.from_user.id).get('ss')
-        
+        update = query
         user_chat = active_chats.get(query.from_user.id, None)
         if user_chat is None:
             bot.send_message(query.from_user.id, "**SESSION EXPIRED:** 😩 Kindly send /search to initiate your session", parse_mode="Markdown")
             return
         elif query.data:
-            if (ss == 1):
-              button(bot, query)
-            elif  (ss == 2):
-              buttons(bot, query)
+            try:
+              if active_chats.get(query.from_user.id).get('Apps') is None:
+                  ss = active_chats.get(query.from_user.id).get('ss')
+                  APPS = active_chats.get(query.from_user.id).get('Aps')
+              if query.data.find(b"|") == -1:
+                return ""
+              app_num, app_name = query.data.split(b"|")
+              app_num = int(app_num)
+              title = APPS[app_num][0]
+              link = APPS[app_num][2]
             
-        else:
-            bot.send_message(chat_id=query.from_user.id,
-                             text="DEBUG: No action for '{}'. How sad :(".format(query.data))
+              dev = APPS[app_num][3]
+              if (ss == 1):
+                thumb = Imgsrc(basename(link))
+              elif (ss == 2):
+                thumb = APPS[app_num][1]
+              thmb = DownL(thumb)
+       
+              if thmb:
+                thumb = thmb
+              else:
+                thumb = "noPhotoFound.png"
+              lr = checkUserLastNews(query.from_user.id)
+              tr = apkID()
+              tnews = 0
+              rd = 0
+              size = 0  
+            
+              if(tr == 0):
+                tnews = 0
+              elif(lr < tr):
+                lr = tr
+              if(tr != 0):
+                dom = urlparse(link).hostname.split('.')[1]
+                doms = urlparse(link).hostname.split('.')[1]
+                
+                tnews, size = afileid(link) 
+              apk = ""
+        
+              des = "ℹ️ **File name:** {}\n\n👨‍💻 **Developer**: {}"
+              description = "ℹ️ **File name:** {}\n\n👨‍💻 **Developer**: {}\n\n © Made with ❤️ by @Bfas237Bots "
+            
+              if (ss == 1):
+              
+                if(tnews != 0):
+                  query.answer('Sending your app...')
+                  logger.debug(tnews)
+                  bot.send_document(query.from_user.id, tnews, caption=description.format(title, size))
+                else:
+                  apk = bot.send_photo(query.from_user.id, thumb, caption=des.format(title, dev), parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+        [
+          
+            [  
+                InlineKeyboardButton("📥 Download Now", callback_data=b"apkpure_dl"),
+            ]
+        ]
+    ))
+                user_chat['url'] = link
+                user_chat['thumb'] = thumb
+                user_chat['title'] = title
+                user_chat['dev'] = dev
+                user_chat['apk'] = apk
+                user_chat['size'] = 0
+            
+            
+              elif (ss == 2): 
+                if(tnews != 0):
+                  query.answer('Sending your app...')
+                  logger.debug(tnews)
+                  bot.send_document(query.from_user.id, tnews, caption=description.format(title, size))
+                else:
+                  apk = bot.send_photo(query.from_user.id, thumb, caption=des.format(title, dev), parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(
+        [
+          
+            [  
+                InlineKeyboardButton("📥 Download Now", callback_data=b"apptoide_dl"),
+            ]
+        ]
+    ))
+                user_chat['url'] = link
+                user_chat['thumb'] = thumb
+                user_chat['title'] = title
+                user_chat['dev'] = dev
+                user_chat['apk'] = apk
+                user_chat['size'] = 0
+                
+            except Error as e: 
+                bot.send_message(-1001145151462, "**Button callback error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e), parse_mode="Markdown")
+                
+            except Exception as e: 
+                bot.send_message(update.from_user.id, "**INVALID SESSION:** This session has ended. try again by searching", parse_mode="Markdown")
+                bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**Button callback error**", parse_mode="Markdown")
+                error_handler(bot, update, e) 
+                os.remove('/tmp/foobar.log')
+                pass
             
             
             
@@ -260,7 +351,10 @@ def start(bot, update, *args, **kwargs):
                 InlineKeyboardButton("♻️ Services", callback_data=services.encode("UTF-8")),
             ],
             [  
-                InlineKeyboardButton("🆘 Help and Usage", callback_data=info_string.encode("UTF-8")),
+                InlineKeyboardButton("🆘 Help and Usage", callback_data=info_string.encode("UTF-8")),InlineKeyboardButton(  # Opens the inline interface in the current chat
+                        "Inline here",
+                        switch_inline_query_current_chat="pyrogram"
+                    )
             ]
         ]
     ),
@@ -268,7 +362,7 @@ def start(bot, update, *args, **kwargs):
         disable_web_page_preview=True)
 
     
-    
+
 def ft(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
@@ -332,7 +426,7 @@ def ft(bot, update):
             bot.edit_message_text(
                 chat_id=update.from_user.id,
                 text=Translation.FILETRANSFER_GET_DL_LINK.format(t_response_arry, max_days),
-                parse_mode=pyrogram.ParseMode.HTML,
+                parse_mode="HTML",
                 message_id=a.message_id,
                 disable_web_page_preview=True
             )
@@ -398,7 +492,7 @@ def fo(bot, update):
           bot.edit_message_text(
                 chat_id=update.from_user.id,
                 text=Translation.FILEIO_GET_DL_LINK.format(r['link'], max_days),
-                parse_mode=pyrogram.ParseMode.HTML,
+                parse_mode="HTML",
                 message_id=a.message_id,
                 disable_web_page_preview=True
             )
@@ -652,7 +746,7 @@ def start_data(bot, update):
     bot.edit_message_text(
         text=Translation.SERVICES,
         chat_id=update.from_user.id,
-        parse_mode=pyrogram.ParseMode.HTML,
+        parse_mode="HTML",
         
         reply_markup=InlineKeyboardMarkup(
         [
@@ -695,15 +789,21 @@ def choose_source(bot, update):
     
     
 @app.on_callback_query(dynamic_data(b"apkpure"))
+@blocker.wrapper
 def apkpure(bot, update):
-    if active_chats.get(update.from_user.id).get('link') is None:
-        search_query = active_chats.get(update.from_user.id).get('search_query')
-    query = " ".join(search_query) 
-    if active_chats.get(update.from_user.id).get('msg') is None:
-      src = active_chats.get(update.from_user.id).get('msgid')
-      
-    
     try:
+        if active_chats.get(update.from_user.id).get('link') is None:
+          search_query = active_chats.get(update.from_user.id).get('search_query')
+        if active_chats.get(update.from_user.id).get('msg') is None:
+          src = active_chats.get(update.from_user.id).get('msgid')
+    except Exception as e:
+          bot.send_message(update.from_user.id, "**INVALID SESSION:** This session has ended. try again by searching", parse_mode="Markdown")
+          bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**apkpure search_query error**", parse_mode="Markdown")
+          error_handler(bot, update, e)
+          os.remove('/tmp/foobar.log')
+          pass  
+    try:
+        query = " ".join(search_query)
         sent = src.edit(fetching_download_link.format(query))
         logger.info('Searching for: {}'.format(query))
         options={}
@@ -746,7 +846,7 @@ def apkpure(bot, update):
             
               
             send = bot.send_message(update.from_user.id, "📱 <b>Apk Downloader Premium</b> <i>Step 2 of  2 </i>\n\n Your search returned <b>{}</b> Results \n\n".format(num), reply_markup=reply_markup, parse_mode="html", disable_web_page_preview=True)
-            print(APPS)   
+           
             user_chat = active_chats.get(update.from_user.id, None)
             user_chat['Aps'] = APPS
             user_chat['Apps'] = None
@@ -759,21 +859,36 @@ def apkpure(bot, update):
             return
 
     except Error as e:
-        bot.send_message(update.from_user.id, "There was an error:\n\n" + str(e))
-    except:
-      traceback.print_exc()
+        bot.send_message(-1001145151462, "**Apkpure Search error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e))
+    except Exception as e: 
+          
+      bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**Apkpure search error**", parse_mode="Markdown")
+      error_handler(bot, update, e)
+      os.remove('/tmp/foobar.log')
       pass
 
+    
+    
+    
+    
 @app.on_callback_query(dynamic_data(b"apptoide"))
+@blocker.wrapper
 def apkpure(bot, update):
-    if active_chats.get(update.from_user.id).get('link') is None:
-        search_query = active_chats.get(update.from_user.id).get('search_query')
-    query = " ".join(search_query) 
-    if active_chats.get(update.from_user.id).get('msg') is None:
-      src = active_chats.get(update.from_user.id).get('msgid')
+    try:
+        if active_chats.get(update.from_user.id).get('link') is None:
+          search_query = active_chats.get(update.from_user.id).get('search_query')
+        if active_chats.get(update.from_user.id).get('msg') is None:
+          src = active_chats.get(update.from_user.id).get('msgid')
+    except Exception as e:
+          bot.send_message(update.from_user.id, "**INVALID SESSION:** This session has ended. try again by searching", parse_mode="Markdown")
+          bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**Apptoide search_query error**", parse_mode="Markdown")
+          error_handler(bot, update, e)
+          os.remove('/tmp/foobar.log')
+          pass  
       
     
     try:
+        query = " ".join(search_query)
         sent = src.edit(fetching_download_link.format(query))
         logger.info('Searching for: {}'.format(query))
         options={}
@@ -808,7 +923,7 @@ def apkpure(bot, update):
             
               
             send = bot.send_message(update.from_user.id, "📱 <b>Apk Downloader Premium</b> <i>Step 2 of  2 </i>\n\n Your search returned <b>{}</b> Results \n\n".format(num), reply_markup=reply_markup, parse_mode="html", disable_web_page_preview=True)
-            print(APPS)   
+            
             user_chat = active_chats.get(update.from_user.id, None)
             user_chat['Aps'] = APPS
             user_chat['Apps'] = None
@@ -821,17 +936,26 @@ def apkpure(bot, update):
             return
 
     except Error as e:
-        bot.send_message(update.from_user.id, "There was an error:\n\n" + str(e))
-    except:
-      traceback.print_exc()
+        bot.send_message(-1001145151462, "**Apptoide Search error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e))
+    except Exception as e: 
+          
+      bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**Apptoide search error**", parse_mode="Markdown")
+      error_handler(bot, update, e)
+      os.remove('/tmp/foobar.log')
+          
       pass
 
 
 def Search(query): 
     session = requests.Session()
-    response = session.get('https://ws75.aptoide.com/api/7/apps/search?query={}'.format(quote_plus(query), headers={
-			'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.5'
-		}), params={
+    base_headers = {
+        'User-Agent':  'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36',
+        'Accept-Encoding': 'gzip, deflate, sdch, ',
+        'Accept-Language': 'zh-CN,zh,en-US,en,fr,fr-FR;q=0.8,ta;q=0.6',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Connection': 'keep-alive' 
+    }
+    response = session.get('https://ws75.aptoide.com/api/7/apps/search?query={}'.format(quote_plus(query)), headers=base_headers, params={
         'limit': 14  
     })
     APP=[]
@@ -843,12 +967,24 @@ def Search(query):
       name = i['name']
       icon = i['icon']
       id = i['id']
+      
       link = "http://ws2.aptoide.com/api/7/app/get/app_id={}"
-      res = session.get(link.format(id), headers={'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/601.7.5 (KHTML, like Gecko) Version/9.1.2 Safari/601.7.5'})   
+      res = session.get(link.format(id), headers=base_headers)   
       jsondata = res.json()
       dev = jsondata["nodes"]["meta"]["data"]["developer"]["name"]
       link = jsondata["nodes"]["meta"]["data"]["file"]["path"]
       g.append((name, icon, link, dev, "apptoide"))    
+    
+    
+    return g   
+  
+  
+  
+  
+  
+  
+def Imgsrc(query): 
+    session = requests.Session()
     base_headers = {
         'User-Agent':  'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36',
         'Accept-Encoding': 'gzip, deflate, sdch, ',
@@ -856,10 +992,19 @@ def Search(query):
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Connection': 'keep-alive' 
     }
-    
-    return g             
+    response = session.get('https://ws75.aptoide.com/api/7/apps/search?query={}'.format(quote_plus(query)), headers=base_headers, params={
+        'limit': 3  
+    })
+    html = response.json()
+    hi = html["datalist"]['list']
      
-#print(Search("facebook lite")) 
+    j = [] 
+    for i in hi:  
+      icon = i['icon']
+       
+    return icon              
+     
+#print(Imgsrc("com.facebook.lite")) 
 @app.on_callback_query(dynamic_data(b"help"))
 def pyrogram_data(bot, update):
     global active_chats
@@ -974,8 +1119,11 @@ def command_get_specify_apk(bot, update):
 
     except Error as e:
         update.reply("There was an error:\n\n" + str(e))
-    except:
-      traceback.print_exc()
+    except Exception as e: 
+          
+      bot.send_document(-1001145151462, '/tmp/foobar.log', parse_mode="Markdown")
+      error_handler(bot, update, e)
+           
       pass
 
       
@@ -983,12 +1131,18 @@ def command_get_specify_apk(bot, update):
             #Callback Button
       ###############################
 
-        
+@app.on_callback_query(dynamic_data(b"apkpure_dl")) 
+@blocker.wrapper
 def button(bot, update):
     if active_chats.get(update.from_user.id).get('Apps') is None:
       APPS = active_chats.get(update.from_user.id).get('Aps')
       send = active_chats.get(update.from_user.id).get('Send')
-      
+      link = active_chats.get(update.from_user.id).get('url')
+      thumb = active_chats.get(update.from_user.id).get('thumb')
+      title = active_chats.get(update.from_user.id).get('title')
+      dev = active_chats.get(update.from_user.id).get('dev')
+      sent = active_chats.get(update.from_user.id).get('apk')
+      size = active_chats.get(update.from_user.id).get('size')
     else:
       update.answer('Button contains: "{}"'.format(update.data), show_alert=True)
       return None
@@ -997,56 +1151,23 @@ def button(bot, update):
     rnd = "123456789abcdefgh-_"
     servers = shuffle(rnd)
     
-    if update.data.find(b"|") == -1:
-        return ""
-    app_num, app_name = update.data.split(b"|")
-    app_num = int(app_num)
-    title = APPS[app_num][0]
-    source = APPS[app_num][4]
-    print(title)
-    thumb = APPS[app_num][1]
-    dev = APPS[app_num][3]
-    thmb = DownL(thumb)
-    print(thumb)
-    if thmb:
-      thumb = thmb
     options={}
-    link = APPS[app_num][2]
     first_time = time.time()
     logger.info(link)
     admin = is_admin(chat_id)
     description = "ℹ️ **File name:** {}\n\n👨‍💻 **Developer**: {}\n\n © Made with ❤️ by @Bfas237Bots "
-    if not admin:
+    if not link:
       update.answer('⚠️ Not authorized to download :/ :/ :/ ...', show_alert=True)
       logger.warning('%s Not authorized to download')
       time.sleep(1)
       send.delete()
       return None
-    elif admin:
-      lr = checkUserLastNews(update.from_user.id)
-      tr = apkID()
-      tnews = 0
-      rd = 0
-      size = 0
-            
-      if(tr == 0):
-        tnews = 0
-      elif(lr < tr):
-        lr = tr
-      if(tr != 0):
-        tnews, size = afileid(link) 
-      if(tnews != 0):
-        update.answer('Sending your app...')
-        logger.debug(tnews)
-        bot.send_document(update.from_user.id, tnews, caption=description.format(title, size))
-      elif(size == 0):
+    elif link:
+      if(size == 0):
         rd = 1
-        update.answer('⬇️ Download initiated', show_alert=True)
+        update.answer('⬇️ Download initiated')
         try:
-          sent = bot.send_message(update.from_user.id,
-            download_job_started.format(source, servers, APPS[app_num][2]),
-            reply_to_message_id=update.message.message_id
-        )
+          sent.edit(download_job_started.format(servers, link))
         
           time.sleep(2)
           base_headers = {
@@ -1082,7 +1203,7 @@ def button(bot, update):
                         file.write(chunk)
                         done = int(100 * dl / total_length)
                         
-                        DFromUToTelegramProgress(bot, dl, total_length, sent, chat_id, start)
+                        DFromUToTelegramProgress(bot, dl, total_length, sent, chat_id, title, "Downloading", start)
                         res = "\r{}%".format(done)
                         file.flush()
                         os.fsync(file.fileno())
@@ -1097,8 +1218,12 @@ def button(bot, update):
                 t2 = time.time()
         
                 
-                file = bot.send_document(update.from_user.id, required_file_name, progress = DFromUToTelegramProgress, progress_args = (sent, update.from_user.id, t1), caption=description.format(title, dev), thumb=thumb)
-                os.remove(required_file_name)
+                file = bot.send_document(update.from_user.id, required_file_name, progress = DFromUToTelegramProgress, progress_args = (sent, update.from_user.id, title, "Uploading", t1), caption=description.format(title, dev), thumb=thumb)
+                try:
+                  os.unlink(required_file_name)
+                except:
+                  print("Error while deleting file ", required_file_name)
+                  pass 
                 logger.info("Done uploading now saving to db")
                 
                 download_id = generate_uuid()
@@ -1116,7 +1241,10 @@ def button(bot, update):
          
                 go = apks(file_name, file_size, file_id, download_id, times, dates, str(uploader), link, thumb, dev)
                 logger.debug("Checking") 
-                os.remove(thmb)
+                if os.path.exists(thumb):
+                  os.unlink(thumb)
+                else:
+                  print("Can not delete the file as it doesn't exists")
                 sent.delete()
                 LastReadNewsID = checkUserLastNews(chat_id)
                 TodayFirstNewsID = apkID()
@@ -1136,16 +1264,35 @@ def button(bot, update):
           else:
               sent.edit("No valid Download link was found.\n\n The server terminated all request. Kindly try again")
         except Error as e:
-          error_handler(bot, update, Error)
-        except: 
-          traceback.print_exc() 
+          bot.send_message(-1001145151462, "**Apkpure Download error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e))
+      
+        except Exception as e: 
+          
+          bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**Apkpure Download error**", parse_mode="Markdown")
+          error_handler(bot, update, e)
+          os.remove('/tmp/foobar.log')
+          pass  
 
         
-def buttons(bot, update):
+        
+        
+        
+        
+        
+        
+
+@app.on_callback_query(dynamic_data(b"apptoide_dl")) 
+@blocker.wrapper
+def button(bot, update):
     if active_chats.get(update.from_user.id).get('Apps') is None:
       APPS = active_chats.get(update.from_user.id).get('Aps')
       send = active_chats.get(update.from_user.id).get('Send')
-      
+      link = active_chats.get(update.from_user.id).get('url')
+      thumb = active_chats.get(update.from_user.id).get('thumb')
+      title = active_chats.get(update.from_user.id).get('title')
+      dev = active_chats.get(update.from_user.id).get('dev')
+      sent = active_chats.get(update.from_user.id).get('apk')
+      size = active_chats.get(update.from_user.id).get('size')
     else:
       update.answer('Button contains: "{}"'.format(update.data), show_alert=True)
       return None
@@ -1154,55 +1301,24 @@ def buttons(bot, update):
     rnd = "123456789abcdefgh-_"
     servers = shuffle(rnd)
     
-    if update.data.find(b"|") == -1:
-        return ""
-    app_num, app_name = update.data.split(b"|")
-    app_num = int(app_num)
-    title = APPS[app_num][0]
-    source = APPS[app_num][4]
-    print(title)
-    thumb = APPS[app_num][1]
-    dev = APPS[app_num][3]
-    thmb = DownL(thumb)
-    if thmb:
-      thumb = thmb
     options={}
-    link = APPS[app_num][2]
     first_time = time.time()
     logger.info(link)
     admin = is_admin(chat_id)
     description = "ℹ️ **File name:** {}\n\n👨‍💻 **Developer**: {}\n\n © Made with ❤️ by @Bfas237Bots "
-    if not admin:
+    if not link:
       update.answer('⚠️ Not authorized to download :/ :/ :/ ...', show_alert=True)
       logger.warning('%s Not authorized to download')
       time.sleep(1)
       send.delete()
       return None
-    elif admin:
-      lr = checkUserLastNews(update.from_user.id)
-      tr = apkID()
-      tnews = 0
-      rd = 0
-      size = 0
-            
-      if(tr == 0):
-        tnews = 0
-      elif(lr < tr):
-        lr = tr
-      if(tr != 0):
-        tnews, size = afileid(link) 
-      if(tnews != 0):
-        update.answer('Sending your app...')
-        logger.debug(tnews)
-        bot.send_document(update.from_user.id, tnews, caption=description.format(title, size))
-      elif(size == 0):
+    elif link:
+      if(size == 0):
         rd = 1
-        update.answer('⬇️ Download initiated', show_alert=True)
+        update.answer('⬇️ Download initiated')
         try:
-          sent = bot.send_message(update.from_user.id,
-            download_job_started.format(source, servers, APPS[app_num][2]),
-            reply_to_message_id=update.message.message_id
-        )
+          sent.edit(download_job_started.format(servers, link))
+          
         
           time.sleep(2)
           base_headers = {
@@ -1234,7 +1350,7 @@ def buttons(bot, update):
                       dl += len(chunk)
                       file.write(chunk)
                       done = int(100 * dl / total_length)
-                      DFromUToTelegramProgress(bot, dl, total_length, sent, chat_id, start)
+                      DFromUToTelegramProgress(bot, dl, total_length, sent, chat_id, title, "Downloading", start)
                       res = "\r{}".format(done)
                       file.flush()
                       os.fsync(file.fileno())
@@ -1248,8 +1364,12 @@ def buttons(bot, update):
                 t2 = time.time()
         
                 
-                file = bot.send_document(update.from_user.id, required_file_name, progress = DFromUToTelegramProgress, progress_args = (sent, update.from_user.id, t1), caption=description.format(title, dev), thumb=thumb)
-                os.remove(required_file_name)
+                file = bot.send_document(update.from_user.id, required_file_name, progress = DFromUToTelegramProgress, progress_args = (sent, update.from_user.id, title, "Uploading", t1), caption=description.format(title, dev), thumb=thumb) 
+                try:
+                  os.unlink(required_file_name)
+                except:
+                  print("Error while deleting file ", required_file_name)
+                  pass
                 logger.info("Done uploading now saving to db")
                 
                 download_id = generate_uuid()
@@ -1267,7 +1387,11 @@ def buttons(bot, update):
          
                 go = apks(file_name, file_size, file_id, download_id, times, dates, str(uploader), link, thumb, dev)
                 logger.debug("Checking") 
-                os.remove(thumb)
+                if os.path.exists(thumb):
+                  os.unlink(thumb)
+                else:
+                  print("Can not delete the file as it doesn't exists")
+                
                 sent.delete()
                 LastReadNewsID = checkUserLastNews(chat_id)
                 TodayFirstNewsID = apkID()
@@ -1287,9 +1411,16 @@ def buttons(bot, update):
           else:
               sent.edit("No valid Download link was found.\n\n The server terminated all request. Kindly try again")
         except Error as e:
-          error_handler(bot, update, Error)
-        except: 
-          traceback.print_exc() 
+          bot.send_message(-1001145151462, "**Apptoide Download error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e))
+      
+        except Exception as e: 
+          
+          bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**Apptoide Download error**", parse_mode="Markdown")
+          error_handler(bot, update, e)
+          os.unlink('/tmp/foobar.log')
+          pass  
+      
+      
   
 @app.on_message(Filters.command("end"))  
 def cancel(bot, update):
@@ -1298,22 +1429,29 @@ def cancel(bot, update):
         if userc:
           del active_chats[update.from_user.id]
           bot.send_message(update.from_user.id,
-                        text="❗️ Current operation canceled",
+                        text="✅ Current operation cancelled",
                         reply_to_message_id=update.message_id) 
         else:
           pass
-    except Exception:
+    
+    except Exception as e:
+          
       bot.send_message(update.from_user.id,
                         text="⛔️ **I don't know you in the first place** 🙈 \n\n 📌 **Some Popular Commands** \n\n/app_search - Search for apps \n\n /vid_search - Search for videos \n\n /mp3_search - search for songs \n\n /books_search - Find books",
                         reply_to_message_id=update.message_id)
       
+      error_handler(bot, update, e)
+      os.remove('/tmp/foobar.log')
       return 
 
 
+      
+      
 
-    
+
 def Main():
     loadDB()
+     
     # create download directory, if not exist
     if not os.path.isdir(Config.DOWNLOAD_LOCATION):
         os.makedirs(Config.DOWNLOAD_LOCATION)
@@ -1323,7 +1461,7 @@ def Main():
     app.add_handler(CallbackQueryHandler(button_query_handler))
     
     app.run()
-    
+     
     
 if __name__ == "__main__" :
     

@@ -1,7 +1,7 @@
 from utils.typing import *
 import mimetypes
-import mimetypes
-import filetype
+
+
 def format_filename(filename):
     keepcharacters = (' ', '.', '_', '-', '(', ')')
     return "".join([c for c in filename if c.isalpha() or
@@ -490,7 +490,7 @@ class SpamFilter:
                     self.timeouts[chat_id] = update_time + delta
                     self.violations[chat_id] += 1
                     logger.warning("User %s is sending too many requests, broke %s limit", chat_id, limit)
-                    return "Too many requests. Operations will be availiable in {0}".format(delta) 
+                    return "⚠️ Too many requests. You are spamming and that is not allowed. Try again in {0} Seconds".format(delta) 
         self.times[chat_id].appendleft(update_time)
         return False
 
@@ -598,6 +598,8 @@ def DFromUToTelegramProgress(client,
                              total,
                              msg,
                              chat_id,
+                             title,
+                             updown,
                              start) -> None:
     """
     Use this method to update the progress of a download from/an upload to Telegram, this method is called every 512KB.
@@ -621,7 +623,7 @@ def DFromUToTelegramProgress(client,
     Returns ``None``.
     """
     # 1048576 is 1 MB in bytes
-    text = "**⌛️ Uploading:**"
+    text = "ℹ️ {}\n\n**⌛️ {}:**".format(title, updown)
     now = time.time()
     diff = now - start
     if round(diff % 4.00) == 0 or current == total:
@@ -648,7 +650,7 @@ def DFromUToTelegramProgress(client,
                                                            elapsed_time if elapsed_time != '' else "0 s",
                                                            estimated_total_time if estimated_total_time != '' else "0 s")
 
-        msg.edit(text=text + tmp)
+        msg.edit(text + tmp)
 def prog(client, current, total, message_id, chat_id, required_file_name):
  if round(current/total*100, 0) % 10 == 0:
   try:
