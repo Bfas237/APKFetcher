@@ -1,8 +1,0 @@
-requests
-bs4
-apkdl
-pyrogram[fast]==0.9.3
-hachoir
-Tgcrypto
-tldextract
-hurry.filesize
