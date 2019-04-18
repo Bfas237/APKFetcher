@@ -7,9 +7,12 @@
 
 Requirements
 -------
-- Pyrogram
-- Bs4
-- Requests
+- pyrogram
+- requests
+- TgCrypto
+- bs4
+- clint
+- timeago
 
 ## How to run the bot
 ----------------------
