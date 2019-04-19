@@ -252,9 +252,9 @@ from requests.exceptions import RequestException
 
          
 
-from pyrogram.api.errors import (
+from pyrogram.errors import (
     BadRequest, Flood, InternalServerError,
-    SeeOther, Unauthorized, UnknownError
+    SeeOther, Unauthorized, UnknownError, FileIdInvalid, FloodWait, UserIsBlocked, MessageNotModified
 )      
 def get_filename_from_cd(cd):
     """
@@ -394,13 +394,11 @@ def random_with_N_digits(n):
 
   
 def get_admin(from_user):
-    admin = Admin.get(id=from_user.id)
+    admin = ""
+    sudoers = [197005208, 409257769, 440287996]
+    admin = [admin if admin in sudoers else False]
     if admin:
-      if (from_user.username == None):
-        from_user.username = "@UnKnownnnn"
-      admin.first_name = from_user.first_name
-      admin.username = from_user.username
-    return admin
+      return[197005208, 409257769, 440287996]
     
 def shuffle(word):
     wordlen = len(word)
@@ -535,10 +533,7 @@ def SizeFormatter(b: int,
                   human_readable: bool = False) -> str:
     """
     Adjust the size from bits to the right measure.
-
     b (``int``): Number of bits.
-
-
     SUCCESS Returns the adjusted measure (``str``).
     """
     if human_readable:
@@ -576,10 +571,7 @@ def SizeFormatter(b: int,
 def TimeFormatter(milliseconds: int) -> str:
     """
     Adjust the time from milliseconds to the right measure.
-
     milliseconds (``int``): Number of milliseconds.
-
-
     SUCCESS Returns the adjusted measure (``str``).
     """
     seconds, milliseconds = divmod(int(milliseconds), 1000)
@@ -604,22 +596,13 @@ def DFromUToTelegramProgress(client,
     """
     Use this method to update the progress of a download from/an upload to Telegram, this method is called every 512KB.
     Update message every ~4 seconds.
-
     client (:class:`Client <pyrogram.Client>`): The Client itself.
-
     current (``int``): Currently downloaded/uploaded bytes.
-
     total (``int``): File size in bytes.
-
     msg (:class:`Message <pyrogram.Message>`): The Message to update while downloading/uploading the file.
-
     chat_id (``int`` | ``str``): Unique identifier (int) or username (str) of the target chat. For your personal cloud (Saved Messages) you can simply use "me" or "self". For a contact that exists in your Telegram address book you can use his phone number (str). For a private channel/supergroup you can use its *t.me/joinchat/* link.
-
     text (``str``): Text to put into the update.
-
     start (``str``): Time when the operation started.
-
-
     Returns ``None``.
     """
     # 1048576 is 1 MB in bytes

@@ -1,10 +1,23 @@
+
+import logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 from utils.typing import *
 from utils.handlers import *
 from utils.dbmanager import loadDB
 import logging
  # Enable logging
-logging.basicConfig(filename='/tmp/foobar.log', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO) 
  
+
+APP_FOLDER = os.path.dirname(os.path.realpath(__file__))
+
+#Iprint(f)     
+logger = logging.getLogger(__name__) 
+logging.getLogger("pyrogram").setLevel(logging.WARNING)
+from pyrogram import Client, Filters
+import os
+plugins = dict(
+    root="plugins"
+) 
 def exception_hook(exc_type, exc_value, exc_traceback):
     logging.error(
         "Uncaught exception",
@@ -14,7 +27,7 @@ def exception_hook(exc_type, exc_value, exc_traceback):
 sys.excepthook = exception_hook
 logger = logging.getLogger(__name__)  
 APP_FOLDER = os.path.dirname(os.path.realpath(__file__))
-
+app = Client("mybot", bot_token=os.environ.get("TOKEN"), api_id=os.environ.get("api_id"), api_hash=os.environ.get("api_hash"))
 #Iprint(f)     
 sadmin = "off"
 madmin = "off"
@@ -63,6 +76,7 @@ TMP_FOLDER = os.path.join(APP_FOLDER, 'tmp/')
  
 BANNED = ()
 ADMINS = open(os.path.join(APP_FOLDER, 'admins.secret'), 'r') 
+SUPER_ADMINS = open(os.path.join(APP_FOLDER, 'super_admins.secret'), 'r')
 active_chats = {
 }
 downloads = {} 
@@ -78,6 +92,14 @@ for item in l_in:
   it += item.rstrip()
 words = it.split()
 
+l_ins = list(SUPER_ADMINS)
+l_outs = [es for es in l_ins if es.isalnum()] 
+l_outs = [strings for strings in l_outs]
+its = " "
+for items in l_ins:   
+  its += items.rstrip()
+wordss = its.split()
+
 def is_admin(user_id):  
     if str(user_id) in words:   
         dic['user'] = True
@@ -89,15 +111,19 @@ def is_admin(user_id):
     return dic
 
 
+def is_super_admin(user_id):  
+    if str(user_id) in wordss:   
+        dic['user'] = True
+        return True
+    else: 
+        dic['user'] = False
+        return False
+ 
+    return dic
 
 
 def command_chats(bot, update):
-        update.message.reply_text("Chats: {}".format(json.dumps(active_chats)))
-
-#tnews, size = afileid("https://apkpure.com/facebook-lite/com.facebook.lite")
-#print(tnews)          
-
-app = Client(os.environ.get("TOKEN"), os.environ.get("APP_ID"), os.environ.get("API_HASH"))
+        update.reply("Chats: {}".format(json.dumps(active_chats)))
 
 
 blocker = SpamFilter()
@@ -113,18 +139,18 @@ no_result_found = "Oops! There was an error!!!"
 
 
 
-def error_handler(bot, update, e):
+def error_handler(bot, update, e): 
         try:
             raise e
             logger.warning('Update "%s" caused error "%s"', update, e)
-            
+            bot.send_message("bfaschat", "**DETAILED ERROR:** \n\nUpdate {} caused error {}".format(update, e), parse_mode="Markdown")
         except UnknownError:
             pass
         # remove update.message.chat_id from conversation list
         except BadRequest:
             pass
         # handle malformed requests - read more below!
-        except Flood:
+        except FloodWait:
             pass
         # handle slow connection problems
         except Unauthorized:
@@ -135,8 +161,18 @@ def error_handler(bot, update, e):
         # the chat_id of a group has changed, use e.new_chat_id instead
         except InternalServerError:
             pass
-        # handle all other telegram related errors
-
+        # the chat_id of a group has changed, use e.new_chat_id instead
+        except FileIdInvalid:
+            pass
+        # the chat_id of a group has changed, use e.new_chat_id instead
+        except UserIsBlocked:
+            pass
+        # the chat_id of a group has changed, use e.new_chat_id instead
+        except Flood:
+            pass
+        # the chat_id of a group has changed, use e.new_chat_id instead
+        except MessageNotModified:
+            pass
     # TRChatBase(update.from_user.id, update.text, "error")
 #DownL("https://www.rspcansw.org.au/wp-content/themes/noPhotoFound.png")
 def compDom(URL1,URL2):
@@ -155,15 +191,15 @@ def compDom(URL1,URL2):
 def button_query_handler(bot, query):
         global active_chats
         update = query
-        user_chat = active_chats.get(query.from_user.id, None)
+        user_chat = active_chats.get(query.message.chat.id, None)
         if user_chat is None:
-            bot.send_message(query.from_user.id, "**SESSION EXPIRED:** 😩 Kindly send /search to initiate your session", parse_mode="Markdown")
+            bot.send_message(query.message.chat.id, "**SESSION EXPIRED:** 😩 Kindly send /search to initiate your session", parse_mode="Markdown")
             return
         elif query.data:
             try:
-              if active_chats.get(query.from_user.id).get('Apps') is None:
-                  ss = active_chats.get(query.from_user.id).get('ss')
-                  APPS = active_chats.get(query.from_user.id).get('Aps')
+              if active_chats.get(query.message.chat.id).get('Apps') is None:
+                  ss = active_chats.get(query.message.chat.id).get('ss')
+                  APPS = active_chats.get(query.message.chat.id).get('Aps')
               if query.data.find(b"|") == -1:
                 return ""
               app_num, app_name = query.data.split(b"|")
@@ -182,7 +218,7 @@ def button_query_handler(bot, query):
                 thumb = thmb
               else:
                 thumb = "noPhotoFound.png"
-              lr = checkUserLastNews(query.from_user.id)
+              lr = checkUserLastNews(query.message.chat.id)
               tr = apkID()
               tnews = 0
               rd = 0
@@ -201,15 +237,15 @@ def button_query_handler(bot, query):
         
               des = "ℹ️ **File name:** {}\n\n👨‍💻 **Developer**: {}"
               description = "ℹ️ **File name:** {}\n\n👨‍💻 **Developer**: {}\n\n © Made with ❤️ by @Bfas237Bots "
-            
+             
               if (ss == 1):
               
                 if(tnews != 0):
                   query.answer('Sending your app...')
                   logger.debug(tnews)
-                  bot.send_document(query.from_user.id, tnews, caption=description.format(title, size))
+                  bot.send_document(query.message.chat.id, tnews, caption=description.format(title, size))
                 else:
-                  apk = bot.send_photo(query.from_user.id, thumb, caption=des.format(title, dev), parse_mode="Markdown",
+                  apk = bot.send_photo(query.message.chat.id, thumb, caption=des.format(title, dev), parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
         [
           
@@ -230,9 +266,9 @@ def button_query_handler(bot, query):
                 if(tnews != 0):
                   query.answer('Sending your app...')
                   logger.debug(tnews)
-                  bot.send_document(query.from_user.id, tnews, caption=description.format(title, size))
+                  bot.send_document(query.message.chat.id, tnews, caption=description.format(title, size))
                 else:
-                  apk = bot.send_photo(query.from_user.id, thumb, caption=des.format(title, dev), parse_mode="Markdown",
+                  apk = bot.send_photo(query.message.chat.id, thumb, caption=des.format(title, dev), parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(
         [
           
@@ -248,15 +284,15 @@ def button_query_handler(bot, query):
                 user_chat['apk'] = apk
                 user_chat['size'] = 0
                 
-            except Error as e: 
-                bot.send_message(-1001145151462, "**Button callback error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e), parse_mode="Markdown")
+            except FileIdInvalid as e: 
+                bot.send_message(query.message.chat.id, "**Button callback error by**: {}\n\n**Details:**\n\n".format(query.message.chat.id, e), parse_mode="Markdown")
                 
             except Exception as e: 
-                bot.send_message(update.from_user.id, "**INVALID SESSION:** This session has ended. try again by searching", parse_mode="Markdown")
-                bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**Button callback error**", parse_mode="Markdown")
-                error_handler(bot, update, e) 
-                os.remove('/tmp/foobar.log')
+                bot.send_message(query.message.chat.id, "**INVALID SESSION:** This session has ended. try again by searching", parse_mode="Markdown")
+                bot.send_message("bfaschat", "**Button callback error**", parse_mode="Markdown")
+                error_handler(bot, update, e)  
                 pass
+              
             
             
             
@@ -530,17 +566,11 @@ def help(bot, update):
     from_user = update.from_user
     chat_id = update.chat.id
 
-    with db_session:
-        admin = get_admin(from_user)
-
+    admin = is_admin(from_user.id)
+    sadmin = is_super_admin(from_user.id)
+    logger.warning("checking privilledge %s and %s", admin, sadmin)
     text = help_text
 
-    if admin:
-        if (madmin != "off"):
-          text += admin_help_text
-        if admin.super_admin:
-            if (sadmin != "off"):
-              text += super_admin_help_text
     sent = bot.send_message(update.from_user.id, 
         text=text,
         
@@ -646,7 +676,7 @@ def pyrogram_data(bot, update):
         message_id=update.message.message_id
     )     
     
-@app.on_message(Filters.command(["search" , "s"]))    
+@app.on_message(Filters.command(["search" , "s" , "find"]))    
 def search(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
@@ -798,7 +828,7 @@ def apkpure(bot, update):
           src = active_chats.get(update.from_user.id).get('msgid')
     except Exception as e:
           bot.send_message(update.from_user.id, "**INVALID SESSION:** This session has ended. try again by searching", parse_mode="Markdown")
-          bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**apkpure search_query error**", parse_mode="Markdown")
+          bot.send_document(-1001145151462, str(e), caption="**apkpure search_query error**", parse_mode="Markdown")
           error_handler(bot, update, e)
           os.remove('/tmp/foobar.log')
           pass  
@@ -862,7 +892,7 @@ def apkpure(bot, update):
         bot.send_message(-1001145151462, "**Apkpure Search error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e))
     except Exception as e: 
           
-      bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**Apkpure search error**", parse_mode="Markdown")
+      bot.send_document(-1001145151462, str(e), caption="**Apkpure search error**", parse_mode="Markdown")
       error_handler(bot, update, e)
       os.remove('/tmp/foobar.log')
       pass
@@ -881,7 +911,7 @@ def apkpure(bot, update):
           src = active_chats.get(update.from_user.id).get('msgid')
     except Exception as e:
           bot.send_message(update.from_user.id, "**INVALID SESSION:** This session has ended. try again by searching", parse_mode="Markdown")
-          bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**Apptoide search_query error**", parse_mode="Markdown")
+          bot.send_document(-1001145151462, str(e), caption="**Apptoide search_query error**", parse_mode="Markdown")
           error_handler(bot, update, e)
           os.remove('/tmp/foobar.log')
           pass  
@@ -939,7 +969,7 @@ def apkpure(bot, update):
         bot.send_message(-1001145151462, "**Apptoide Search error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e))
     except Exception as e: 
           
-      bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**Apptoide search error**", parse_mode="Markdown")
+      bot.send_document(-1001145151462, str(e), caption="**Apptoide search error**", parse_mode="Markdown")
       error_handler(bot, update, e)
       os.remove('/tmp/foobar.log')
           
@@ -1013,19 +1043,12 @@ def pyrogram_data(bot, update):
     chat_id = update.from_user.id
     bot.send_chat_action(chat_id,'TYPING')
     from_user = update.from_user
-    chat_id = update.chat.id
-
-    with db_session:
-        admin = get_admin(from_user)
-
+    chat_id = update.message.chat.id
+    admin = is_admin(from_user.id)
+    sadmin = is_super_admin(from_user.id)
+    logger.warning("checking privilledge %s and %s", admin, sadmin)
     text = help_text
 
-    if admin:
-        if (madmin != "off"):
-          text += admin_help_text
-        if admin.super_admin:
-            if (sadmin != "off"):
-              text += super_admin_help_text
     start_string = "{}".format("start")
     bot.edit_message_text(
         text=text,
@@ -1038,7 +1061,7 @@ def pyrogram_data(bot, update):
                 InlineKeyboardButton("⬅️ " + "Go Back" , callback_data=start_string.encode("UTF-8"))
             ]
         ]
-    ),
+    ), parse_mode="html",
         message_id=update.message.message_id,
         disable_web_page_preview=True
     )        
@@ -1121,7 +1144,7 @@ def command_get_specify_apk(bot, update):
         update.reply("There was an error:\n\n" + str(e))
     except Exception as e: 
           
-      bot.send_document(-1001145151462, '/tmp/foobar.log', parse_mode="Markdown")
+      bot.send_document(-1001145151462, str(e), parse_mode="Markdown")
       error_handler(bot, update, e)
            
       pass
@@ -1134,20 +1157,20 @@ def command_get_specify_apk(bot, update):
 @app.on_callback_query(dynamic_data(b"apkpure_dl")) 
 @blocker.wrapper
 def button(bot, update):
-    if active_chats.get(update.from_user.id).get('Apps') is None:
-      APPS = active_chats.get(update.from_user.id).get('Aps')
-      send = active_chats.get(update.from_user.id).get('Send')
-      link = active_chats.get(update.from_user.id).get('url')
-      thumb = active_chats.get(update.from_user.id).get('thumb')
-      title = active_chats.get(update.from_user.id).get('title')
-      dev = active_chats.get(update.from_user.id).get('dev')
-      sent = active_chats.get(update.from_user.id).get('apk')
-      size = active_chats.get(update.from_user.id).get('size')
+    if active_chats.get(update.message.chat.id).get('Apps') is None:
+      APPS = active_chats.get(update.message.chat.id).get('Aps')
+      send = active_chats.get(update.message.chat.id).get('Send')
+      link = active_chats.get(update.message.chat.id).get('url')
+      thumb = active_chats.get(update.message.chat.id).get('thumb')
+      title = active_chats.get(update.message.chat.id).get('title')
+      dev = active_chats.get(update.message.chat.id).get('dev')
+      sent = active_chats.get(update.message.chat.id).get('apk')
+      size = active_chats.get(update.message.chat.id).get('size')
     else:
       update.answer('Button contains: "{}"'.format(update.data), show_alert=True)
       return None
     
-    chat_id = update.from_user.id
+    chat_id = update.message.chat.id
     rnd = "123456789abcdefgh-_"
     servers = shuffle(rnd)
     
@@ -1193,7 +1216,7 @@ def button(bot, update):
                 if total_length is None:  # no content length header
                   file.write(r.content)
                 else:
-                  chat_id = update.from_user.id
+                  chat_id = chat_id
                   start = time.time()
                   dl = 0
                   total_length = int(total_length)
@@ -1202,7 +1225,7 @@ def button(bot, update):
                         dl += len(chunk)
                         file.write(chunk)
                         done = int(100 * dl / total_length)
-                        
+                         
                         DFromUToTelegramProgress(bot, dl, total_length, sent, chat_id, title, "Downloading", start)
                         res = "\r{}%".format(done)
                         file.flush()
@@ -1218,7 +1241,7 @@ def button(bot, update):
                 t2 = time.time()
         
                 
-                file = bot.send_document(update.from_user.id, required_file_name, progress = DFromUToTelegramProgress, progress_args = (sent, update.from_user.id, title, "Uploading", t1), caption=description.format(title, dev), thumb=thumb)
+                file = bot.send_document(chat_id, required_file_name, progress = DFromUToTelegramProgress, progress_args = (sent, chat_id, title, "Uploading", t1), caption=description.format(title, dev), thumb=thumb)
                 try:
                   os.unlink(required_file_name)
                 except:
@@ -1257,18 +1280,18 @@ def button(bot, update):
                 if(TodayFirstNewsID != 0):
                   news = getApk(LastReadNewsID, update.from_user)
                 elif (news != None):
-                  bot.send_message(update.from_user.id, news) 
+                  bot.send_message(chat_id, news) 
                   logger.info(news)
               
               
           else:
               sent.edit("No valid Download link was found.\n\n The server terminated all request. Kindly try again")
         except Error as e:
-          bot.send_message(-1001145151462, "**Apkpure Download error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e))
+          bot.send_message(-1001145151462, "**Apkpure Download error by**: {}\n\n**Details:**\n\n".format(chat_id, e))
       
         except Exception as e: 
           
-          bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**Apkpure Download error**", parse_mode="Markdown")
+          bot.send_document(-1001145151462, str(e), caption="**Apkpure Download error**", parse_mode="Markdown")
           error_handler(bot, update, e)
           os.remove('/tmp/foobar.log')
           pass  
@@ -1284,20 +1307,20 @@ def button(bot, update):
 @app.on_callback_query(dynamic_data(b"apptoide_dl")) 
 @blocker.wrapper
 def button(bot, update):
-    if active_chats.get(update.from_user.id).get('Apps') is None:
-      APPS = active_chats.get(update.from_user.id).get('Aps')
-      send = active_chats.get(update.from_user.id).get('Send')
-      link = active_chats.get(update.from_user.id).get('url')
-      thumb = active_chats.get(update.from_user.id).get('thumb')
-      title = active_chats.get(update.from_user.id).get('title')
-      dev = active_chats.get(update.from_user.id).get('dev')
-      sent = active_chats.get(update.from_user.id).get('apk')
-      size = active_chats.get(update.from_user.id).get('size')
+    if active_chats.get(update.message.chat.id).get('Apps') is None:
+      APPS = active_chats.get(update.message.chat.id).get('Aps')
+      send = active_chats.get(update.message.chat.id).get('Send')
+      link = active_chats.get(update.message.chat.id).get('url')
+      thumb = active_chats.get(update.message.chat.id).get('thumb')
+      title = active_chats.get(update.message.chat.id).get('title')
+      dev = active_chats.get(update.message.chat.id).get('dev')
+      sent = active_chats.get(update.message.chat.id).get('apk')
+      size = active_chats.get(update.message.chat.id).get('size')
     else:
       update.answer('Button contains: "{}"'.format(update.data), show_alert=True)
       return None
     
-    chat_id = update.from_user.id
+    chat_id = update.message.chat.id
     rnd = "123456789abcdefgh-_"
     servers = shuffle(rnd)
     
@@ -1364,7 +1387,7 @@ def button(bot, update):
                 t2 = time.time()
         
                 
-                file = bot.send_document(update.from_user.id, required_file_name, progress = DFromUToTelegramProgress, progress_args = (sent, update.from_user.id, title, "Uploading", t1), caption=description.format(title, dev), thumb=thumb) 
+                file = bot.send_document(update.message.chat.id, required_file_name, progress = DFromUToTelegramProgress, progress_args = (sent, update.message.chat.id, title, "Uploading", t1), caption=description.format(title, dev), thumb=thumb) 
                 try:
                   os.unlink(required_file_name)
                 except:
@@ -1404,25 +1427,20 @@ def button(bot, update):
                 if(TodayFirstNewsID != 0):
                   news = getApk(LastReadNewsID, update.from_user)
                 elif (news != None):
-                  bot.send_message(update.from_user.id, news) 
+                  bot.send_message(update.message.chat.id, news) 
                   logger.info(news)
               
               
           else:
               sent.edit("No valid Download link was found.\n\n The server terminated all request. Kindly try again")
-        except Error as e:
-          bot.send_message(-1001145151462, "**Apptoide Download error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e))
-      
-        except Exception as e: 
-          
-          bot.send_document(-1001145151462, '/tmp/foobar.log', caption="**Apptoide Download error**", parse_mode="Markdown")
+        except Exception as e:
+          bot.send_message("Bfaschat", "**Apptoide Download error by**: {}\n\n**Details:**\n\n".format(update.message.chat.id, e))
           error_handler(bot, update, e)
-          os.unlink('/tmp/foobar.log')
           pass  
       
       
   
-@app.on_message(Filters.command("end"))  
+@app.on_message(Filters.command(["end", "cancel"]))  
 def cancel(bot, update):
     try:
         userc = active_chats[update.from_user.id]

@@ -15,7 +15,7 @@ except ImportError:
 import warnings, random
 from random import randint
 from translation import Translation
-from pyrogram import Error
+import pyrogram.errors
 
 from uuid import uuid4 
 from functools import wraps

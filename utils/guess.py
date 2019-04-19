@@ -26,7 +26,7 @@ def default_mime_types():
     global common_types
 
     suffix_map = {
-        '.svgz': '.svg.gz',
+        '.svgz': '. izahzjkghbb n  bnbb  .gz',
         '.tgz': '.tar.gz',
         '.taz': '.tar.gz',
         '.tz': '.tar.gz',
@@ -184,7 +184,7 @@ def default_mime_types():
 
     # These are non-standard types, commonly found in the wild.  They will
     # only match if strict=0 flag is given to the API methods.
-
+    
     # Please sort these too
     common_types = {
         '.jpg' : 'image/jpg',
@@ -199,6 +199,5 @@ def default_mime_types():
         '.rtf' : 'application/rtf',
         '.xul' : 'text/xul'
         }
+    
 default_mime_types()
-
-

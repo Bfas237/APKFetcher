@@ -1,5 +1,6 @@
+pyrogram[fast]
 requests
-https://github.com/pyrogram/pyrogram/archive/develop.zip
 TgCrypto
 bs4
-
+clint
+timeago
