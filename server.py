@@ -6,7 +6,7 @@ from utils.handlers import *
 from utils.dbmanager import loadDB
 import logging
  # Enable logging
- 
+from pyrogram import errors
 
 APP_FOLDER = os.path.dirname(os.path.realpath(__file__))
 
@@ -27,7 +27,7 @@ def exception_hook(exc_type, exc_value, exc_traceback):
 sys.excepthook = exception_hook
 logger = logging.getLogger(__name__)  
 APP_FOLDER = os.path.dirname(os.path.realpath(__file__))
-app = Client("mybot", bot_token=os.environ.get("TOKEN"), api_id=os.environ.get("api_id"), api_hash=os.environ.get("api_hash"))
+app = Client("mybot", bot_token=os.environ.get("TOKEN"), api_id=os.environ.get("APP_ID"), api_hash=os.environ.get("API_HASH"))
 #Iprint(f)     
 sadmin = "off"
 madmin = "off"
@@ -200,9 +200,9 @@ def button_query_handler(bot, query):
               if active_chats.get(query.message.chat.id).get('Apps') is None:
                   ss = active_chats.get(query.message.chat.id).get('ss')
                   APPS = active_chats.get(query.message.chat.id).get('Aps')
-              if query.data.find(b"|") == -1:
+              if query.data.find("|") == -1:
                 return ""
-              app_num, app_name = query.data.split(b"|")
+              app_num, app_name = query.data.split("|")
               app_num = int(app_num)
               title = APPS[app_num][0]
               link = APPS[app_num][2]
@@ -333,7 +333,7 @@ def messages(bot, update):
         [
           
             [  
-                InlineKeyboardButton("⬅️ Go Back", callback_data=apk_string.encode("UTF-8")),
+                InlineKeyboardButton("⬅️ Go Back", callback_data=apk_string),
             ]
         ]
     ),
@@ -356,7 +356,7 @@ def messages(bot, update):
         [
           
             [  
-                InlineKeyboardButton("⬅️ Go Back", callback_data=home_string.encode("UTF-8")),
+                InlineKeyboardButton("⬅️ Go Back", callback_data=home_string),
             ]
         ]
     ))
@@ -382,12 +382,12 @@ def start(bot, update, *args, **kwargs):
         [
             [  # First row
                 # Generates a callback query when pressed
-                InlineKeyboardButton("🚸 Join Beta group ", callback_data=join_string.encode("UTF-8")),
+                InlineKeyboardButton("🚸 Join Beta group ", callback_data=join_string),
                 # Opens a web URL
-                InlineKeyboardButton("♻️ Services", callback_data=services.encode("UTF-8")),
+                InlineKeyboardButton("♻️ Services", callback_data=services),
             ],
             [  
-                InlineKeyboardButton("🆘 Help and Usage", callback_data=info_string.encode("UTF-8")),InlineKeyboardButton(  # Opens the inline interface in the current chat
+                InlineKeyboardButton("🆘 Help and Usage", callback_data=info_string),InlineKeyboardButton(  # Opens the inline interface in the current chat
                         "Inline here",
                         switch_inline_query_current_chat="pyrogram"
                     )
@@ -577,7 +577,7 @@ def help(bot, update):
         reply_markup=InlineKeyboardMarkup(
         [
             [  
-                InlineKeyboardButton("⬅️ " + "Go Back" , callback_data=start_string.encode("UTF-8"))
+                InlineKeyboardButton("⬅️ " + "Go Back" , callback_data=start_string)
             ]
         ]
     ), parse_mode="html",
@@ -597,7 +597,7 @@ def help(bot, update):
 
     
     
-@app.on_callback_query(dynamic_data(b"ddd"))
+@app.on_callback_query(dynamic_data("ddd"))
 def pyrogram_data(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
@@ -611,10 +611,10 @@ def pyrogram_data(bot, update):
         [ 
             [  # First row
                 # Generates a callback query when pressed
-                InlineKeyboardButton("🔎 " + " Search Android Apps " , callback_data=apk_string.encode("UTF-8"))
+                InlineKeyboardButton("🔎 " + " Search Android Apps " , callback_data=apk_string)
             ],
             [ 
-                InlineKeyboardButton("🚫  Cancel" , callback_data=start_string.encode("UTF-8"))
+                InlineKeyboardButton("🚫  Cancel" , callback_data=start_string)
             ]
         
         
@@ -622,7 +622,7 @@ def pyrogram_data(bot, update):
     ),
         message_id=update.message.message_id
     )         
-@app.on_callback_query(dynamic_data(b"yy"))
+@app.on_callback_query(dynamic_data("yy"))
 def pyrogram_data(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
@@ -636,10 +636,10 @@ def pyrogram_data(bot, update):
         [ 
             [  # First row
                 # Generates a callback query when pressed
-                InlineKeyboardButton("🔎 " + " Search Android Apps " , callback_data=apk_string.encode("UTF-8"))
+                InlineKeyboardButton("🔎 " + " Search Android Apps " , callback_data=apk_string)
             ],
             [ 
-                InlineKeyboardButton("🚫  Cancel" , callback_data=start_string.encode("UTF-8"))
+                InlineKeyboardButton("🚫  Cancel" , callback_data=start_string)
             ]
         
         
@@ -648,7 +648,7 @@ def pyrogram_data(bot, update):
         message_id=update.message.message_id
     )         
     
-@app.on_callback_query(dynamic_data(b"downl"))
+@app.on_callback_query(dynamic_data("downl"))
 def pyrogram_data(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
@@ -664,10 +664,10 @@ def pyrogram_data(bot, update):
         [ 
             [  # First row
                 # Generates a callback query when pressed
-                InlineKeyboardButton("🔎 " + " Search Android Apps " , callback_data=apk_string.encode("UTF-8"))
+                InlineKeyboardButton("🔎 " + " Search Android Apps " , callback_data=apk_string)
             ],
             [ 
-                InlineKeyboardButton("🚫  Cancel" , callback_data=start_string.encode("UTF-8"))
+                InlineKeyboardButton("🚫  Cancel" , callback_data=start_string)
             ]
         
         
@@ -691,7 +691,7 @@ def search(bot, update):
         reply_markup=InlineKeyboardMarkup(
         [
             [  
-                InlineKeyboardButton("⬅️  Retrun to Previous menu", callback_data=start_string.encode("UTF-8")),
+                InlineKeyboardButton("⬅️  Retrun to Previous menu", callback_data="downl"),
             ]
         ]
     ),
@@ -700,7 +700,7 @@ def search(bot, update):
     user_chat['msg'] = None
     user_chat['msgid'] = src 
     
-@app.on_callback_query(dynamic_data(b"start"))
+@app.on_callback_query(dynamic_data("start"))
 def start_data(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
@@ -724,12 +724,12 @@ def start_data(bot, update):
         [
             [  # First row
                 # Generates a callback query when pressed
-                InlineKeyboardButton("🚸 Join Beta group ", callback_data=join_string.encode("UTF-8")),
+                InlineKeyboardButton("🚸 Join Beta group ", callback_data=join_string),
                 # Opens a web URL
-                InlineKeyboardButton("♻️ Services", callback_data=services.encode("UTF-8")),
+                InlineKeyboardButton("♻️ Services", callback_data=services),
             ],
             [  
-                InlineKeyboardButton("🆘 Help and Usage", callback_data=info_string.encode("UTF-8")),
+                InlineKeyboardButton("🆘 Help and Usage", callback_data=info_string),
             ]
         ]
     ),
@@ -739,7 +739,7 @@ def start_data(bot, update):
     )
 
     
-@app.on_callback_query(dynamic_data(b"join"))
+@app.on_callback_query(dynamic_data("join"))
 def pyrogram_data(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
@@ -755,7 +755,7 @@ def pyrogram_data(bot, update):
                 # Generates a callback query when pressed
                 InlineKeyboardButton("🚹  Join Beta group" , url="https://t.me/joinchat/C74PmEPu2JymxxnUCbPytw"),
                 # Opens a web URL
-                InlineKeyboardButton("⬅️  Retrun to Main menu" , callback_data=start_string.encode("UTF-8")),
+                InlineKeyboardButton("⬅️  Retrun to Main menu" , callback_data=start_string),
             ],
         
         
@@ -764,7 +764,7 @@ def pyrogram_data(bot, update):
         message_id=update.message.message_id
     )        
 
-@app.on_callback_query(dynamic_data(b"services"))
+@app.on_callback_query(dynamic_data("services"))
 def start_data(bot, update):
     global active_chats
     if update.from_user.id not in active_chats:
@@ -782,7 +782,7 @@ def start_data(bot, update):
         [
             
             [  
-                InlineKeyboardButton("⬅️ " + "Go Back" , callback_data=start_string.encode("UTF-8"))
+                InlineKeyboardButton("⬅️ " + "Go Back" , callback_data=start_string)
             ]
         ]
     ),
@@ -799,14 +799,15 @@ def choose_source(bot, update):
     start_string = "{}".format("apkpure")
     apk_string = "{}".format("apptoide")
     home_string = "{}".format("start")
-    src.edit("Choose a source to search from below",
+    
+    update.reply("Choose a source to search from below",
         reply_markup=InlineKeyboardMarkup(
         [ 
             [  # First row
                 # Generates a callback query when pressed
-                InlineKeyboardButton("🔎 " + " Search ApkPure 🔋" , callback_data=start_string.encode("UTF-8")), InlineKeyboardButton("🔎 " + " Search Apptoide 🛡" , callback_data=apk_string.encode("UTF-8"))
+                InlineKeyboardButton("🔎 " + " Search ApkPure 🔋" , callback_data=start_string), InlineKeyboardButton("🔎 " + " Search Apptoide 🛡" , callback_data=apk_string)
             ], [  
-                InlineKeyboardButton("💣 " + "Kill Activity" , callback_data=home_string.encode("UTF-8"))
+                InlineKeyboardButton("💣 " + "Kill Activity" , callback_data=home_string)
             ]
         
         
@@ -818,7 +819,7 @@ def choose_source(bot, update):
     user_chat['msgid'] = src 
     
     
-@app.on_callback_query(dynamic_data(b"apkpure"))
+@app.on_callback_query(dynamic_data("apkpure"))
 @blocker.wrapper
 def apkpure(bot, update):
     try:
@@ -830,7 +831,6 @@ def apkpure(bot, update):
           bot.send_message(update.from_user.id, "**INVALID SESSION:** This session has ended. try again by searching", parse_mode="Markdown")
           bot.send_document(-1001145151462, str(e), caption="**apkpure search_query error**", parse_mode="Markdown")
           error_handler(bot, update, e)
-          os.remove('/tmp/foobar.log')
           pass  
     try:
         query = " ".join(search_query)
@@ -866,7 +866,7 @@ def apkpure(bot, update):
                 ikeyboard = [
                             InlineKeyboardButton(
                                 "[{:02d}]  -  {}".format(idx, app[0]),
-                                callback_data=start_string.encode("UTF-8")
+                                callback_data=start_string
                             )
                         ]
                 inline_keyboard.append(ikeyboard)
@@ -888,20 +888,15 @@ def apkpure(bot, update):
                               "\n\n❗️ Search Not Found.. Try again")
             return
 
-    except Error as e:
-        bot.send_message(-1001145151462, "**Apkpure Search error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e))
-    except Exception as e: 
-          
-      bot.send_document(-1001145151462, str(e), caption="**Apkpure search error**", parse_mode="Markdown")
-      error_handler(bot, update, e)
-      os.remove('/tmp/foobar.log')
+    except Exception as e:
+      bot.send_message("bfaschat", "**Apkpure Search error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e))
       pass
 
     
     
     
     
-@app.on_callback_query(dynamic_data(b"apptoide"))
+@app.on_callback_query(dynamic_data("apptoide"))
 @blocker.wrapper
 def apkpure(bot, update):
     try:
@@ -913,7 +908,6 @@ def apkpure(bot, update):
           bot.send_message(update.from_user.id, "**INVALID SESSION:** This session has ended. try again by searching", parse_mode="Markdown")
           bot.send_document(-1001145151462, str(e), caption="**Apptoide search_query error**", parse_mode="Markdown")
           error_handler(bot, update, e)
-          os.remove('/tmp/foobar.log')
           pass  
       
     
@@ -943,7 +937,7 @@ def apkpure(bot, update):
                 ikeyboard = [
                             InlineKeyboardButton(
                                 "[{:02d}]  -  {}".format(idx, app[0]),
-                                callback_data=start_string.encode("UTF-8")
+                                callback_data=start_string
                             )
                         ]
                 inline_keyboard.append(ikeyboard)
@@ -965,14 +959,9 @@ def apkpure(bot, update):
                               "\n\n❗️ Search Not Found.. Try again")
             return
 
-    except Error as e:
-        bot.send_message(-1001145151462, "**Apptoide Search error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e))
-    except Exception as e: 
-          
-      bot.send_document(-1001145151462, str(e), caption="**Apptoide search error**", parse_mode="Markdown")
+    except Exception as e:
+      bot.send_message("bfaschat", "**Apptoide Search error by**: {}\n\n**Details:**\n\n".format(update.from_user.id, e))
       error_handler(bot, update, e)
-      os.remove('/tmp/foobar.log')
-          
       pass
 
 
@@ -1035,7 +1024,7 @@ def Imgsrc(query):
     return icon              
      
 #print(Imgsrc("com.facebook.lite")) 
-@app.on_callback_query(dynamic_data(b"help"))
+@app.on_callback_query(dynamic_data("help"))
 def pyrogram_data(bot, update):
     global active_chats
     active_chats[update.from_user.id] = {'actions': []}
@@ -1058,7 +1047,7 @@ def pyrogram_data(bot, update):
         [
           
             [  
-                InlineKeyboardButton("⬅️ " + "Go Back" , callback_data=start_string.encode("UTF-8"))
+                InlineKeyboardButton("⬅️ " + "Go Back" , callback_data=start_string)
             ]
         ]
     ), parse_mode="html",
@@ -1119,7 +1108,7 @@ def command_get_specify_apk(bot, update):
                 ikeyboard = [
                             InlineKeyboardButton(
                                 "[{:02d}]  -  {}".format(idx, app[0]),
-                                callback_data=start_string.encode("UTF-8")
+                                callback_data=start_string
                             )
                         ]
                 inline_keyboard.append(ikeyboard)
@@ -1140,11 +1129,10 @@ def command_get_specify_apk(bot, update):
                               "\n\n❗️ Search Not Found.. Try again")
             return
 
-    except Error as e:
-        update.reply("There was an error:\n\n" + str(e))
     except Exception as e: 
           
-      bot.send_document(-1001145151462, str(e), parse_mode="Markdown")
+      update.reply("There was an error:\n\n" + str(e))
+      bot.send_document("bfaschat", str(e), parse_mode="Markdown")
       error_handler(bot, update, e)
            
       pass
@@ -1154,7 +1142,7 @@ def command_get_specify_apk(bot, update):
             #Callback Button
       ###############################
 
-@app.on_callback_query(dynamic_data(b"apkpure_dl")) 
+@app.on_callback_query(dynamic_data("apkpure_dl")) 
 @blocker.wrapper
 def button(bot, update):
     if active_chats.get(update.message.chat.id).get('Apps') is None:
@@ -1286,14 +1274,9 @@ def button(bot, update):
               
           else:
               sent.edit("No valid Download link was found.\n\n The server terminated all request. Kindly try again")
-        except Error as e:
-          bot.send_message(-1001145151462, "**Apkpure Download error by**: {}\n\n**Details:**\n\n".format(chat_id, e))
-      
-        except Exception as e: 
-          
-          bot.send_document(-1001145151462, str(e), caption="**Apkpure Download error**", parse_mode="Markdown")
+        except Exception as e:
+          bot.send_message("bfaschat", "**Apkpure Download error by**: {}\n\n**Details:**\n\n".format(chat_id, e))
           error_handler(bot, update, e)
-          os.remove('/tmp/foobar.log')
           pass  
 
         
@@ -1304,7 +1287,7 @@ def button(bot, update):
         
         
 
-@app.on_callback_query(dynamic_data(b"apptoide_dl")) 
+@app.on_callback_query(dynamic_data("apptoide_dl")) 
 @blocker.wrapper
 def button(bot, update):
     if active_chats.get(update.message.chat.id).get('Apps') is None:
@@ -1390,7 +1373,7 @@ def button(bot, update):
                 file = bot.send_document(update.message.chat.id, required_file_name, progress = DFromUToTelegramProgress, progress_args = (sent, update.message.chat.id, title, "Uploading", t1), caption=description.format(title, dev), thumb=thumb) 
                 try:
                   os.unlink(required_file_name)
-                except:
+                except Exception:
                   print("Error while deleting file ", required_file_name)
                   pass
                 logger.info("Done uploading now saving to db")
@@ -1459,7 +1442,6 @@ def cancel(bot, update):
                         reply_to_message_id=update.message_id)
       
       error_handler(bot, update, e)
-      os.remove('/tmp/foobar.log')
       return 
 
 
